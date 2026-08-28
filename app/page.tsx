@@ -22,32 +22,42 @@ export default function AdminPanel() {
 
   if (!isLoggedIn) {
     return (
-      <main className="min-h-screen bg-[#070b19] flex items-center justify-center p-4 font-sans relative overflow-hidden">
+      <main className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" 
+            style={{
+              background: 'linear-gradient(135deg, #1a0b2e 0%, #3a1c71 50%, #d76d77 100%)', // ပုံထဲကလို နောက်ခံ Gradient
+            }}>
         
-        {/* Background Glow Effects (Optional for extra premium look) */}
-        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-pink-600/10 rounded-full blur-[100px]"></div>
-
-        <div className="w-full max-w-[400px] bg-[#141627] rounded-[2.5rem] p-8 sm:p-10 border border-white/5 shadow-2xl relative z-10">
+        {/* Glassmorphism Login Box */}
+        <div className="w-full max-w-[420px] rounded-3xl p-8 sm:p-10 relative z-10"
+             style={{
+               background: 'rgba(255, 255, 255, 0.05)',
+               backdropFilter: 'blur(20px)',
+               WebkitBackdropFilter: 'blur(20px)',
+               border: '1px solid rgba(255, 255, 255, 0.1)',
+               boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)'
+             }}>
           
-          {/* Logo Area */}
-          <div className="relative w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-[#0a0b14] border border-white/10 shadow-[0_0_20px_rgba(236,72,153,0.2)] overflow-hidden">
-             {/* Logo နေရာတွင် အစ်ကို့ Logo ထည့်နိုင်ပါသည်။ လောလောဆယ် စာသားနှင့် ပုံစံဖန်တီးထားပါသည်။ */}
-             <div className="text-center leading-tight">
-                <span className="text-pink-500 font-black text-sm block">Paing Gyi</span>
-                <span className="text-yellow-400 font-bold text-[10px] block">Admin</span>
-             </div>
+          {/* Top Lock Icon in a circle */}
+          <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center rounded-full"
+               style={{
+                 background: 'rgba(255, 255, 255, 0.1)',
+                 border: '1px solid rgba(255, 255, 255, 0.2)',
+                 boxShadow: '0 0 20px rgba(59, 130, 246, 0.5)'
+               }}>
+             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+             </svg>
           </div>
 
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-white mb-2">Welcome Back!</h1>
-            <p className="text-gray-400 text-sm">Login to Admin Panel</p>
+            <p className="text-gray-300 text-sm">Login to Admin Panel</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            {/* Username Input */}
+          <form onSubmit={handleLogin} className="space-y-5">
+            {/* Username Input with Glass Effect */}
             <div className="relative flex items-center">
-              <svg className="absolute left-4 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg className="absolute left-4 w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
               </svg>
               <input 
@@ -55,13 +65,17 @@ export default function AdminPanel() {
                 placeholder="Admin Username" 
                 value={username} 
                 onChange={(e) => setUsername(e.target.value)} 
-                className="w-full bg-[#1c1e32] border border-white/5 rounded-2xl py-3.5 pl-12 pr-4 text-white text-sm focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full rounded-xl py-3.5 pl-12 pr-4 text-white text-sm focus:outline-none placeholder-gray-400"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
               />
             </div>
 
-            {/* Password Input */}
+            {/* Password Input with Glass Effect */}
             <div className="relative flex items-center">
-              <svg className="absolute left-4 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg className="absolute left-4 w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
               </svg>
               <input 
@@ -69,16 +83,23 @@ export default function AdminPanel() {
                 placeholder="Password" 
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
-                className="w-full bg-[#1c1e32] border border-white/5 rounded-2xl py-3.5 pl-12 pr-4 text-white text-sm focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full rounded-xl py-3.5 pl-12 pr-4 text-white text-sm focus:outline-none placeholder-gray-400"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
               />
             </div>
 
-            {loginError && <p className="text-red-500 text-xs text-center font-medium mt-2">Invalid Username or Password!</p>}
+            {loginError && <p className="text-red-400 text-xs text-center font-medium">Invalid Username or Password!</p>}
 
-            {/* Login Button (Gradient) */}
+            {/* Login Button (Gradient like the picture) */}
             <button 
               type="submit" 
-              className="w-full bg-gradient-to-r from-blue-500 to-pink-500 hover:opacity-90 text-white font-bold text-sm py-3.5 rounded-2xl shadow-[0_4px_15px_rgba(59,130,246,0.3)] transition-all mt-4"
+              className="w-full font-bold text-white text-sm py-3.5 rounded-xl transition-all shadow-lg mt-2"
+              style={{
+                background: 'linear-gradient(90deg, #3b82f6 0%, #ec4899 100%)',
+              }}
             >
               Login
             </button>
@@ -88,7 +109,7 @@ export default function AdminPanel() {
     );
   }
 
-  // --- Admin Panel ဝင်ပြီးသား မျက်နှာပြင် (Tabs များ) ---
+  // --- Admin Panel Tabs မျက်နှာပြင် ---
   return (
     <main className="min-h-screen bg-[#070b19] p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -114,31 +135,24 @@ export default function AdminPanel() {
 
         {/* Empty Content Areas for Tabs */}
         <div className="bg-[#141627] rounded-[2rem] border border-white/5 p-8 shadow-2xl min-h-[500px] flex items-center justify-center">
-
           {activeTab === 'orders' && (
             <div className="text-center">
               <div className="text-4xl mb-4">📦</div>
               <h2 className="text-white text-lg font-bold mb-2">စောင့်ဆိုင်းစာရင်း</h2>
-              <p className="text-gray-500 text-sm max-w-md mx-auto">ဒီနေရာမှာ User တွေ ဝယ်ယူထားတဲ့ ဂိမ်း Package (ဥပမာ- Diamonds, UC) စာရင်းတွေ ပေါ်လာပါမယ်။</p>
             </div>
           )}
-
           {activeTab === 'topups' && (
             <div className="text-center">
               <div className="text-4xl mb-4">💳</div>
               <h2 className="text-white text-lg font-bold mb-2">ငွေဖြည့်တောင်းဆိုမှုများ</h2>
-              <p className="text-gray-500 text-sm max-w-md mx-auto">ဒီနေရာမှာ Wallet ထဲ ငွေဖြည့်ဖို့ တောင်းဆိုထားတဲ့ Screenshot တွေနဲ့ အချက်အလက်တွေ ပေါ်လာပါမယ်။</p>
             </div>
           )}
-
           {activeTab === 'prices' && (
             <div className="text-center">
               <div className="text-4xl mb-4">💰</div>
               <h2 className="text-white text-lg font-bold mb-2">ဈေးနှုန်းပြင်ဆင်ရန်</h2>
-              <p className="text-gray-500 text-sm max-w-md mx-auto">ဒီနေရာမှာ ဂိမ်း Item တွေရဲ့ ဈေးနှုန်းတွေကို Admin က ဝင်ရောက်ပြင်ဆင်လို့ ရပါမယ်။</p>
             </div>
           )}
-
         </div>
 
       </div>
