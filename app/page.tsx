@@ -2,6 +2,94 @@
 
 import { useState } from 'react';
 
+// အစ်ကိုပေးထားသော Data အပြည့်အစုံကို သီးသန့်ထုတ်ထားခြင်း
+const initialGamePrices = {
+  mlbb: [
+    { id: 'mlbb_1', name: '55 Diamonds', price: 3461 }, { id: 'mlbb_2', name: '165 Diamonds', price: 10372 },
+    { id: 'mlbb_3', name: '275 Diamonds', price: 16636 }, { id: 'mlbb_4', name: '565 Diamonds', price: 34160 },
+    { id: 'mlbb_5', name: 'Weekly Pass', price: 6600 }, { id: 'mlbb_6', name: 'Weekly Pass x 2', price: 13200 },
+    { id: 'mlbb_7', name: 'Weekly Pass x 3', price: 19800 }, { id: 'mlbb_8', name: 'Weekly Pass x 4', price: 26400 },
+    { id: 'mlbb_9', name: 'Weekly Pass x 5', price: 33000 }, { id: 'mlbb_10', name: 'Twilight Pass', price: 35712 },
+    { id: 'mlbb_11', name: 'Weekly Elite Bundle', price: 3461 }, { id: 'mlbb_12', name: 'Monthly Epic Bundle', price: 17434 },
+    { id: 'mlbb_13', name: '86 Diamonds', price: 5457 }, { id: 'mlbb_14', name: '172 Diamonds', price: 10824 },
+    { id: 'mlbb_15', name: '257 Diamonds', price: 15678 }, { id: 'mlbb_16', name: '343 Diamonds', price: 21134 },
+    { id: 'mlbb_17', name: '429 Diamonds', price: 26502 }, { id: 'mlbb_18', name: '514 Diamonds', price: 31355 },
+    { id: 'mlbb_19', name: '600 Diamonds', price: 36812 }, { id: 'mlbb_20', name: '705 Diamonds', price: 42588 },
+    { id: 'mlbb_21', name: '792 Diamonds', price: 48045 }, { id: 'mlbb_22', name: '878 Diamonds', price: 53412 },
+    { id: 'mlbb_23', name: '963 Diamonds', price: 58266 }, { id: 'mlbb_24', name: '1049 Diamonds', price: 63722 },
+    { id: 'mlbb_25', name: '1135 Diamonds', price: 69090 }, { id: 'mlbb_26', name: '1220 Diamonds', price: 73943 },
+    { id: 'mlbb_27', name: '1412 Diamonds', price: 85176 }, { id: 'mlbb_28', name: '1584 Diamonds', price: 96000 },
+    { id: 'mlbb_29', name: '1669 Diamonds', price: 100854 }, { id: 'mlbb_30', name: '1755 Diamonds', price: 106310 },
+    { id: 'mlbb_31', name: '1841 Diamonds', price: 111678 }, { id: 'mlbb_32', name: '2195 Diamonds', price: 128918 },
+    { id: 'mlbb_33', name: '2538 Diamonds', price: 150052 }, { id: 'mlbb_34', name: '2901 Diamonds', price: 171506 },
+    { id: 'mlbb_35', name: '3073 Diamonds', price: 182330 }, { id: 'mlbb_36', name: '3688 Diamonds', price: 215069 },
+    { id: 'mlbb_37', name: '3945 Diamonds', price: 230747 }, { id: 'mlbb_38', name: '4031 Diamonds', price: 236204 },
+    { id: 'mlbb_39', name: '4566 Diamonds', price: 268482 }, { id: 'mlbb_40', name: '5100 Diamonds', price: 300245 },
+    { id: 'mlbb_41', name: '5532 Diamonds', price: 324734 }, { id: 'mlbb_42', name: '6055 Diamonds', price: 354812 },
+    { id: 'mlbb_43', name: '6752 Diamonds', price: 398677 }, { id: 'mlbb_44', name: '7030 Diamonds', price: 415366 },
+    { id: 'mlbb_45', name: '7727 Diamonds', price: 453651 }, { id: 'mlbb_46', name: '9288 Diamonds', price: 539360 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+  
+  mcgg: [
+    { id: 'mcgg_1', name: '10', bonus: '+ 1 Diamonds', price: 900 }, { id: 'mcgg_2', name: '20', bonus: '+ 2 Diamonds', price: 1700 },
+    { id: 'mcgg_3', name: '51', bonus: '+ 5 Diamonds', price: 4200 }, { id: 'mcgg_4', name: 'Double Dia(50+50)or 55', bonus: 'No bonus', price: 4400 },
+    { id: 'mcgg_5', name: '102', bonus: '+ 10 Diamonds', price: 8300 }, { id: 'mcgg_6', name: 'Weekly Card', bonus: 'No bonus', price: 8800 },
+    { id: 'mcgg_7', name: 'Double Dia(150+150)or 165', bonus: 'No bonus', price: 13000 }, { id: 'mcgg_8', name: '203', bonus: '+ 20 Diamonds', price: 16600 },
+    { id: 'mcgg_9', name: 'Double Dia(250+250) or 275', bonus: 'No bonus', price: 21500 }, { id: 'mcgg_10', name: '303', bonus: '+ 33 Diamonds', price: 24900 },
+    { id: 'mcgg_11', name: '504', bonus: '+ 66 Diamonds', price: 41400 }, { id: 'mcgg_12', name: 'Double Dia(500+500)or 565', bonus: 'No bonus', price: 43400 },
+    { id: 'mcgg_13', name: '1007', bonus: '+ 156 Diamonds', price: 82900 }, { id: 'mcgg_14', name: '2015', bonus: '+ 383 Diamonds', price: 165700 },
+    { id: 'mcgg_15', name: '5035', bonus: '+ 1007 Diamonds', price: 414100 }
+  ],
+
+  pubg: [
+    { id: 'pubg_1', name: '60 UC', price: 4106 }, { id: 'pubg_2', name: '325 UC', price: 20529 },
+    { id: 'pubg_3', name: '660 UC', price: 41059 }, { id: 'pubg_4', name: '985 UC', price: 61588 },
+    { id: 'pubg_5', name: '1320 UC', price: 82118 }, { id: 'pubg_6', name: '1980 UC', price: 123177 },
+    { id: 'pubg_7', name: '2310 UC', price: 143706 }, { id: 'pubg_8', name: '2640 UC', price: 164236 },
+    { id: 'pubg_9', name: '3850 UC', price: 239512 }, { id: 'pubg_10', name: '4180 UC', price: 260041 },
+    { id: 'pubg_11', name: '5900 UC', price: 367277 }, { id: 'pubg_12', name: '8100 UC', price: 504112 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  ucPack: [
+    { id: 'ucp_1', name: 'First Purchase Pack', price: 4100 }, { id: 'ucp_2', name: 'Prime (1 Month)', price: 4100 },
+    { id: 'ucp_3', name: 'Weekly Deal Pack 1', price: 4200 }, { id: 'ucp_4', name: 'Upgradable Firearm Materials Pack', price: 12300 },
+    { id: 'ucp_5', name: 'Prime (3 Months)', price: 12300 }, { id: 'ucp_6', name: 'Weekly Mythic Emblem Value Pack', price: 12400 },
+    { id: 'ucp_7', name: 'Weekly Deal Pack 2', price: 12400 }, { id: 'ucp_8', name: 'Mythic Emblem Pack', price: 20400 },
+    { id: 'ucp_9', name: 'Prime (6 Months)', price: 24400 }, { id: 'ucp_10', name: 'Elite Pass LV1-50', price: 24800 },
+    { id: 'ucp_11', name: 'Prime Plus (1 Month)', price: 40700 }, { id: 'ucp_12', name: 'Prime (12 Months)', price: 48800 },
+    { id: 'ucp_13', name: 'Elite Pass LV1-100', price: 49700 }, { id: 'ucp_14', name: 'Prime Plus (3 Months)', price: 122000 },
+    { id: 'ucp_15', name: 'Elite Pass Plus LV1-100', price: 123100 }, { id: 'ucp_16', name: 'Prime Plus (6 Months)', price: 243900 },
+    { id: 'ucp_17', name: 'Prime Plus (12 Months)', price: 487800 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  telegram: [
+    { id: 'tg_1', name: '50 Stars', price: 3552 }, { id: 'tg_2', name: '75 Stars', price: 5306 },
+    { id: 'tg_3', name: '100 Stars', price: 7058 }, { id: 'tg_4', name: '150 Stars', price: 10587 },
+    { id: 'tg_5', name: '250 Stars', price: 17645 }, { id: 'tg_6', name: '350 Stars', price: 24703 },
+    { id: 'tg_7', name: '500 Stars', price: 35291 }, { id: 'tg_8', name: '750 Stars', price: 52936 },
+    { id: 'tg_9', name: '1K Stars', price: 70582 }, { id: 'tg_10', name: '1.5K Stars', price: 105873 },
+    { id: 'tg_11', name: '2.5K Stars', price: 176454 }, { id: 'tg_12', name: '5K Stars', price: 352908 },
+    { id: 'tg_13', name: '10K Stars', price: 705816 }, { id: 'tg_14', name: '3 months premium', price: 56420 },
+    { id: 'tg_15', name: '6 months premium', price: 75241 }, { id: 'tg_16', name: '12 months premium', price: 136412 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  heartopia: [
+    { id: 'heart_1', name: '20 Heart Diamond', price: 2588 }, { id: 'heart_2', name: '60 Heart Diamond', price: 4895 },
+    { id: 'heart_3', name: '300+20 Heart Diamond', price: 24846 }, { id: 'heart_4', name: '680+50 Heart Diamond', price: 55994 },
+    { id: 'heart_5', name: '1280+90 Heart Diamond', price: 102297 }, { id: 'heart_6', name: '1980+150 Heart Diamond', price: 155703 },
+    { id: 'heart_7', name: '3280+270 Heart Diamond', price: 253623 }, { id: 'heart_8', name: '6480+570 Heart Diamond', price: 498398 },
+    { id: 'heart_9', name: 'GAMG Junior Membership', price: 2681 }, { id: 'heart_10', name: 'GAMG Formal Membership', price: 15057 },
+    { id: 'heart_11', name: 'Fashionwave Gift Box', price: 24846 }, { id: 'heart_12', name: 'Fashionwave Gift Box Upgrade', price: 31102 },
+    { id: 'heart_13', name: 'Premium Fashionwave Gift Box', price: 55994 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  smileCoin: [
+    { id: 'smile_1', name: 'Brl 300', price: 25800 },
+    { id: 'smile_2', name: 'Brl 1000', price: 83800 },
+    { id: 'smile_3', name: 'Brl 5000', price: 419000 } 
+  ]
+};
+
 export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
@@ -11,43 +99,10 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState<'orders' | 'topups' | 'prices'>('prices');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // အစ်ကိုပေးထားသော ဈေးနှုန်း Mapping အပြည့်အစုံ (Category ခွဲထားသည်)
-  const [gamePrices, setGamePrices] = useState({
-    mlbb: [
-      { id: 'mlbb_1', name: '55 Diamonds', price: 3461 }, { id: 'mlbb_2', name: '165 Diamonds', price: 10372 },
-      { id: 'mlbb_3', name: '275 Diamonds', price: 16636 }, { id: 'mlbb_4', name: '565 Diamonds', price: 34160 },
-      { id: 'mlbb_5', name: 'Weekly Pass', price: 6600 }, { id: 'mlbb_6', name: 'Weekly Pass x 2', price: 13200 },
-      { id: 'mlbb_10', name: 'Twilight Pass', price: 35712 }, { id: 'mlbb_46', name: '9288 Diamonds', price: 539360 }
-      // (နေရာမကျပ်စေရန် အဓိက Item အချို့သာ အရင်ပြထားပါသည်။ လိုအပ်လျှင် ထပ်ထည့်နိုင်ပါသည်။)
-    ],
-    magicChess: [
-      { id: 'mcgg_1', name: '10', bonus: '+ 1 Diamonds', price: 900 },
-      { id: 'mcgg_6', name: 'Weekly Card', bonus: 'No bonus', price: 8800 },
-      { id: 'mcgg_15', name: '5035', bonus: '+ 1007 Diamonds', price: 414100 }
-    ],
-    pubg: [
-      { id: 'pubg_1', name: '60 UC', price: 4106 }, { id: 'pubg_2', name: '325 UC', price: 20529 },
-      { id: 'pubg_3', name: '660 UC', price: 41059 }, { id: 'pubg_12', name: '8100 UC', price: 504112 }
-    ],
-    ucPack: [
-      { id: 'ucp_1', name: 'First Purchase Pack', price: 4100 },
-      { id: 'ucp_10', name: 'Elite Pass LV1-50', price: 24800 },
-      { id: 'ucp_17', name: 'Prime Plus (12 Months)', price: 487800 }
-    ],
-    telegram: [
-      { id: 'tg_1', name: '50 Stars', price: 3552 }, { id: 'tg_7', name: '500 Stars', price: 35291 },
-      { id: 'tg_14', name: '3 months premium', price: 56420 }
-    ],
-    heartopia: [
-      { id: 'heart_1', name: '20 Heart Diamond', price: 2588 },
-      { id: 'heart_9', name: 'GAMG Junior Membership', price: 2681 }
-    ],
-    smileCoin: [
-      { id: 'smile_1', name: 'Brl 300', price: 25800 },
-      { id: 'smile_2', name: 'Brl 1000', price: 83800 },
-      { id: 'smile_3', name: 'Brl 5000', price: 419000 } // မှန်းထည့်ပေးထားပါသည်။
-    ]
-  });
+  const [gamePrices, setGamePrices] = useState(initialGamePrices);
+  
+  // ဖွင့်ထားသော ဂိမ်းအမည်ကို မှတ်သားရန် (ဥပမာ- 'mlbb', 'pubg', 'all_closed')
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +130,17 @@ export default function AdminPanel() {
     console.log("Saved Prices Object:", gamePrices);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
+  };
+
+  // ဂိမ်းအမည်ပြောင်းရန် လှပသော နာမည်များ
+  const categoryNames: Record<string, string> = {
+    mlbb: 'Mobile Legends (MLBB)',
+    mcgg: 'Magic Chess',
+    pubg: 'PUBG Mobile',
+    ucPack: 'UC Packs',
+    telegram: 'Telegram Premium',
+    heartopia: 'Heartopia',
+    smileCoin: 'Smile Coin'
   };
 
   if (!isLoggedIn) {
@@ -119,12 +185,12 @@ export default function AdminPanel() {
         </div>
 
         {/* Tab Contents */}
-        <div className="bg-[#141627] rounded-[2rem] border border-white/5 p-6 shadow-2xl min-h-[500px]">
+        <div className="bg-[#141627] rounded-[2rem] border border-white/5 p-6 shadow-2xl min-h-[600px]">
           {activeTab === 'prices' && (
             <div>
               <div className="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
                 <h2 className="text-white text-lg font-bold">💰 ဈေးနှုန်းများ တိုက်ရိုက်ပြင်ဆင်ရန်</h2>
-                <button onClick={handleSavePrices} className="bg-green-600 hover:bg-green-500 text-white font-bold text-sm px-6 py-2.5 rounded-xl">
+                <button onClick={handleSavePrices} className="bg-green-600 hover:bg-green-500 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-lg">
                   Save Changes
                 </button>
               </div>
@@ -135,33 +201,54 @@ export default function AdminPanel() {
                 </div>
               )}
 
-              {/* Game Categories Loop */}
-              {Object.entries(gamePrices).map(([category, items]) => (
-                <div key={category} className="mb-10">
-                  <h3 className="text-xl font-bold text-pink-500 mb-4 uppercase tracking-wider border-l-4 border-pink-500 pl-3">
-                    {category === 'mlbb' ? 'Mobile Legends' : category.toUpperCase()}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {items.map((item) => (
-                      <div key={item.id} className="bg-[#1c1e32] p-4 rounded-2xl border border-white/5 flex flex-col justify-between">
-                        <div className="mb-3">
-                          <h3 className="text-white font-bold text-sm">{item.name}</h3>
-                          {'bonus' in item && item.bonus !== 'No bonus' && <span className="text-green-400 text-[10px]">{item.bonus}</span>}
-                        </div>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">Ks</span>
-                          <input 
-                            type="number"
-                            value={item.price}
-                            onChange={(e) => handlePriceChange(category as keyof typeof gamePrices, item.id, e.target.value)}
-                            className="w-full bg-[#070b19] border border-white/10 rounded-xl py-2.5 pl-10 pr-3 text-white text-sm font-bold focus:border-blue-500 outline-none"
-                          />
+              {/* Game Categories List (Accordion Style) */}
+              <div className="space-y-4">
+                {Object.entries(gamePrices).map(([categoryKey, items]) => (
+                  <div key={categoryKey} className="bg-[#1c1e32] rounded-2xl border border-white/5 overflow-hidden">
+                    
+                    {/* Game Header Button */}
+                    <button 
+                      onClick={() => setExpandedCategory(expandedCategory === categoryKey ? null : categoryKey)}
+                      className="w-full flex justify-between items-center p-5 bg-[#1c1e32] hover:bg-white/5 transition-colors focus:outline-none"
+                    >
+                      <h3 className="text-white font-bold text-base flex items-center gap-3">
+                        <span className="text-pink-500 text-xl">🎮</span> 
+                        {categoryNames[categoryKey] || categoryKey}
+                      </h3>
+                      <span className="text-gray-400 bg-black/20 px-3 py-1 rounded-full text-xs">
+                        {items.length} items
+                      </span>
+                    </button>
+
+                    {/* Expandable Price List (ပြထားသော ဂိမ်းများသာ ပေါ်မည်) */}
+                    {expandedCategory === categoryKey && (
+                      <div className="p-5 border-t border-white/5 bg-[#0a0b14]/50">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                          {items.map((item) => (
+                            <div key={item.id} className="bg-[#141627] p-4 rounded-xl border border-white/5 flex flex-col justify-between">
+                              <div className="mb-3">
+                                <h3 className="text-white font-bold text-xs">{item.name}</h3>
+                                {'bonus' in item && item.bonus !== 'No bonus' && <span className="text-green-400 text-[10px]">{item.bonus}</span>}
+                              </div>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-xs">Ks</span>
+                                <input 
+                                  type="number"
+                                  value={item.price}
+                                  onChange={(e) => handlePriceChange(categoryKey as keyof typeof gamePrices, item.id, e.target.value)}
+                                  className="w-full bg-[#070b19] border border-white/10 rounded-lg py-2 pl-9 pr-3 text-white text-sm font-bold focus:border-blue-500 outline-none transition-colors"
+                                />
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    ))}
+                    )}
+
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+
             </div>
           )}
         </div>
