@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Vercel Environment ပြဿနာမရှိစေရန် Key များကို တိုက်ရိုက်ထည့်ထားပါသည်
+const supabaseUrl = 'https://lejfhsuwajmzikmudmcs.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlamZoc3V3YWptemlrbXVkbWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NjA4NzUsImV4cCI6MjEwMzMzNjg3NX0.x3EVXbqCmrq0yiGlKI6GrWadKWU9TuXKs5F3w8uJNQA';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const initialGamePrices = {
@@ -101,16 +102,22 @@ export default function AdminPanel() {
 
   // Fetch Real Prices from Supabase
   const fetchRealPrices = async () => {
-    const { data } = await supabase.from('game_prices').select('*');
-    if (data && data.length > 0) {
-      const updatedPrices = JSON.parse(JSON.stringify(initialGamePrices));
-      data.forEach((dbItem: any) => {
-        if (updatedPrices[dbItem.category]) {
-          const index = updatedPrices[dbItem.category].findIndex((i: any) => i.id === dbItem.id);
-          if (index !== -1) updatedPrices[dbItem.category][index].price = dbItem.price;
-        }
-      });
-      setGamePrices(updatedPrices);
+    try {
+      const { data, error } = await supabase.from('game_prices').select('*');
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        const updatedPrices = JSON.parse(JSON.stringify(initialGamePrices));
+        data.forEach((dbItem: any) => {
+          if (updatedPrices[dbItem.category]) {
+            const index = updatedPrices[dbItem.category].findIndex((i: any) => i.id === dbItem.id);
+            if (index !== -1) updatedPrices[dbItem.category][index].price = dbItem.price;
+          }
+        });
+        setGamePrices(updatedPrices);
+      }
+    } catch (err) {
+      console.log("Fetch Error:", err);
     }
   };
 
@@ -136,14 +143,16 @@ export default function AdminPanel() {
       });
     });
 
-    const { error } = await supabase.from('game_prices').upsert(allItems);
-    setIsSaving(false);
-    
-    if (error) {
-      alert("Error saving: " + error.message);
-    } else {
+    try {
+      const { error } = await supabase.from('game_prices').upsert(allItems);
+      if (error) throw error;
+      
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error: any) {
+      alert("Error saving: " + error.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -158,8 +167,12 @@ export default function AdminPanel() {
   };
 
   const fetchOrders = async () => {
-    const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-    if (data) setOrders(data);
+    try {
+      const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+      if (data) setOrders(data);
+    } catch (err) {
+      console.log("Order Fetch Error:", err);
+    }
   };
 
   useEffect(() => {
