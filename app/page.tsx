@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { savePricesToDb } from './actions/supabase'; // Server Action ကို လှမ်းခေါ်မည်
 
-// Supabase ချိတ်ဆက်ခြင်း
 const supabaseUrl = 'https://lejfhsuwajmzikmudmcs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlamZoc3V3YWptemlrbXVkbWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NjA4NzUsImV4cCI6MjEwMzMzNjg3NX0.x3EVXbqCmrq0yiGlKI6GrWadKWU9TuXKs5F3w8uJNQA';
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -100,7 +100,6 @@ export default function AdminPanel() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Database ကနေ ဈေးအစစ်တွေ ဆွဲထုတ်မယ်
   const fetchRealPrices = async () => {
     try {
       const { data, error } = await supabase.from('game_prices').select('*');
@@ -125,11 +124,10 @@ export default function AdminPanel() {
     }
   }, [isLoggedIn, activeTab]);
 
-  // Database ထဲ တိုက်ရိုက် သွားရေးမယ့်စနစ် (Direct Upsert)
+  // Server API သို့ လှမ်းပို့မည့် စနစ်
   const handleSavePrices = async () => {
     setIsSaving(true);
     
-    // လက်ရှိ ပြင်ထားတဲ့ ဈေးနှုန်းတွေ အကုန်စုမယ်
     const allItems: any[] = [];
     Object.entries(gamePrices).forEach(([cat, items]) => {
       (items as any[]).forEach(item => {
@@ -138,25 +136,22 @@ export default function AdminPanel() {
           category: cat,
           name: item.name,
           bonus: item.bonus || 'No bonus',
-          price: Number(item.price) // သေချာ ဂဏန်းပြောင်းပေးမယ်
+          price: Number(item.price)
         });
       });
     });
 
     try {
-      // Supabase ကို တိုက်ရိုက် လှမ်း Update (Upsert) လုပ်မယ်
-      const { error } = await supabase.from('game_prices').upsert(allItems, { onConflict: 'id' });
+      // Backend ကို လှမ်းခေါ်မည် (CORS Error မဖြစ်တော့ပါ)
+      const result = await savePricesToDb(allItems);
       
-      if (error) {
-        throw error;
-      }
+      if (!result.success) throw new Error(result.error);
       
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
       
     } catch (error: any) {
       alert("Error saving to database: " + error.message);
-      console.error(error);
     } finally {
       setIsSaving(false);
     }
