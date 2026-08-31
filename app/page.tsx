@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { savePricesToDb } from './actions/supabase'; // Server Action ကို လှမ်းခေါ်မည်
+import { savePricesToDb } from './actions/supabase';
 
 const supabaseUrl = 'https://lejfhsuwajmzikmudmcs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlamZoc3V3YWptemlrbXVkbWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NjA4NzUsImV4cCI6MjEwMzMzNjg3NX0.x3EVXbqCmrq0yiGlKI6GrWadKWU9TuXKs5F3w8uJNQA';
@@ -86,14 +86,14 @@ const initialGamePrices = {
     { id: 'smile_1', name: 'Brl 300', price: 25800 },
     { id: 'smile_2', name: 'Brl 1000', price: 83800 },
     { id: 'smile_3', name: 'Brl 5000', price: 419000 }
-  ]
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })) // <--- ပြဿနာကို ဤနေရာတွင် ဖြေရှင်းထားသည်
 };
 
 export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [activeTab, setActiveTab] = useState<'orders' | 'prices'>('prices');
+  const [activeTab, setActiveTab] = useState<'orders' | 'transactions' | 'mapping'>('orders'); 
   const [orders, setOrders] = useState<any[]>([]);
   const [gamePrices, setGamePrices] = useState(initialGamePrices);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -119,12 +119,11 @@ export default function AdminPanel() {
   };
 
   useEffect(() => {
-    if (isLoggedIn && activeTab === 'prices') {
+    if (isLoggedIn && activeTab === 'mapping') {
       fetchRealPrices();
     }
   }, [isLoggedIn, activeTab]);
 
-  // Server API သို့ လှမ်းပို့မည့် စနစ်
   const handleSavePrices = async () => {
     setIsSaving(true);
     
@@ -142,14 +141,10 @@ export default function AdminPanel() {
     });
 
     try {
-      // Backend ကို လှမ်းခေါ်မည် (CORS Error မဖြစ်တော့ပါ)
       const result = await savePricesToDb(allItems);
-      
       if (!result.success) throw new Error(result.error);
-      
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-      
     } catch (error: any) {
       alert("Error saving to database: " + error.message);
     } finally {
@@ -177,7 +172,7 @@ export default function AdminPanel() {
   };
 
   useEffect(() => {
-    if (isLoggedIn && activeTab === 'orders') fetchOrders();
+    if (isLoggedIn && (activeTab === 'orders' || activeTab === 'transactions')) fetchOrders();
   }, [isLoggedIn, activeTab]);
 
   const markAsDone = async (id: string) => {
@@ -186,7 +181,7 @@ export default function AdminPanel() {
   };
 
   const deleteOrder = async (id: string) => {
-    if (window.confirm("သေချာပြီလား?")) {
+    if (window.confirm("သေချာပြီလား? အော်ဒါကို ဖျက်ပစ်ပါမည်။")) {
       await supabase.from('orders').delete().eq('id', id);
       fetchOrders();
     }
@@ -221,74 +216,134 @@ export default function AdminPanel() {
   return (
     <main className="min-h-screen bg-[#070b19] p-4 md:p-8 font-sans">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="bg-[#141627] p-4 rounded-2xl border border-white/5 flex flex-wrap gap-2 justify-between items-center">
-          <h1 className="text-white font-bold text-sm">Paing Gyi Admin</h1>
+        <div className="bg-[#141627] p-4 rounded-2xl border border-white/5 flex flex-wrap gap-4 justify-between items-center">
+          <h1 className="text-white font-bold text-sm">Paing Gyi Admin Panel</h1>
           <div className="flex gap-2">
-            <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 rounded-xl text-xs font-bold ${activeTab === 'orders' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400'}`}>Orders (အော်ဒါများ)</button>
-            <button onClick={() => setActiveTab('prices')} className={`px-4 py-2 rounded-xl text-xs font-bold ${activeTab === 'prices' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400'}`}>Prices (ဈေးနှုန်းများ)</button>
+            <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === 'orders' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400 hover:text-white'}`}>Orders</button>
+            <button onClick={() => setActiveTab('transactions')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === 'transactions' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400 hover:text-white'}`}>Transactions</button>
+            <button onClick={() => setActiveTab('mapping')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === 'mapping' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400 hover:text-white'}`}>Mapping</button>
           </div>
         </div>
 
         <div className="bg-[#141627] rounded-2xl border border-white/5 p-6 min-h-[600px]">
+          
           {activeTab === 'orders' && (
             <div>
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-white text-lg font-bold">📦 လက်ရှိ အော်ဒါစာရင်းများ</h2>
-                <button onClick={fetchOrders} className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30">🔄 Refresh</button>
+                <button onClick={fetchOrders} className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 hover:bg-blue-500/30">🔄 Refresh</button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {orders.map((order) => (
-                  <div key={order.id} className="bg-[#1c1e32] border border-white/10 p-5 rounded-2xl">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="text-pink-500 font-bold text-sm uppercase">{order.game_name}</h3>
-                        <p className="text-white font-black text-lg mt-1">{order.item_name}</p>
-                      </div>
-                      <span className={`px-3 py-1 text-[10px] font-bold rounded-full ${order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>{order.status === 'pending' ? '⏳ စောင့်ဆိုင်းဆဲ' : '✅ ပြီးစီး'}</span>
+                  <div key={order.id} className="bg-[#1c1e32] border border-white/10 p-5 rounded-2xl relative overflow-hidden">
+                    {order.status === 'done' && <div className="absolute top-0 right-0 bg-green-500/20 text-green-400 px-3 py-1 rounded-bl-lg text-[10px] font-bold">✅ ပြီးစီး</div>}
+                    {order.status === 'pending' && <div className="absolute top-0 right-0 bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-bl-lg text-[10px] font-bold">⏳ စောင့်ဆိုင်းဆဲ</div>}
+                    
+                    <div className="mt-2">
+                      <h3 className="text-pink-500 font-bold text-sm uppercase">{order.game_name}</h3>
+                      <p className="text-white font-black text-lg mt-1">{order.item_name}</p>
                     </div>
-                    <div className="bg-[#0a0b14]/50 p-3 rounded-xl mb-4 text-sm">
-                      <div className="flex justify-between mb-1"><span className="text-gray-400">ID:</span> <span className="text-white">{order.player_id}</span></div>
-                      {order.zone_id && <div className="flex justify-between mb-1"><span className="text-gray-400">Zone:</span> <span className="text-white">{order.zone_id}</span></div>}
-                      <div className="flex justify-between mt-2 pt-2 border-t border-white/5"><span className="text-gray-400">ကျသင့်ငွေ:</span> <span className="text-[#00f2fe] font-bold">{order.price.toLocaleString()} Ks</span></div>
+
+                    <div className="bg-[#0a0b14]/50 p-3 rounded-xl my-4 text-sm space-y-2">
+                      <div className="flex justify-between"><span className="text-gray-400">Player ID:</span> <span className="text-white font-bold">{order.player_id}</span></div>
+                      {order.zone_id && <div className="flex justify-between"><span className="text-gray-400">Zone ID:</span> <span className="text-white font-bold">{order.zone_id}</span></div>}
+                      <div className="flex justify-between pt-2 border-t border-white/5"><span className="text-gray-400">ကျသင့်ငွေ:</span> <span className="text-[#00f2fe] font-bold">{order.price.toLocaleString()} Ks</span></div>
                     </div>
+
                     <div className="flex gap-2">
-                      {order.status === 'pending' && <button onClick={() => markAsDone(order.id)} className="flex-1 bg-green-600/90 text-white text-xs font-bold py-2 rounded-lg">✔️ ဖြည့်ပြီးပါပြီ</button>}
-                      <button onClick={() => deleteOrder(order.id)} className="px-4 bg-red-500/10 text-red-400 text-xs font-bold py-2 rounded-lg">ဖျက်မည်</button>
+                      {order.status === 'pending' && <button onClick={() => markAsDone(order.id)} className="flex-1 bg-green-600/90 hover:bg-green-500 text-white text-xs font-bold py-2.5 rounded-lg transition-colors">✔️ စိန်ဖြည့်ပြီးပါပြီ (Mark Done)</button>}
+                      <button onClick={() => deleteOrder(order.id)} className="px-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold py-2.5 rounded-lg transition-colors">ဖျက်မည်</button>
                     </div>
                   </div>
                 ))}
+                {orders.length === 0 && <div className="col-span-2 text-center text-gray-500 py-10">အော်ဒါ မရှိသေးပါ</div>}
               </div>
             </div>
           )}
 
-          {activeTab === 'prices' && (
+          {activeTab === 'transactions' && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-white text-lg font-bold">💳 ငွေသွင်းပြေစာ (Transactions) စစ်ဆေးရန်</h2>
+                <button onClick={fetchOrders} className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 hover:bg-blue-500/30">🔄 Refresh</button>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/10 text-gray-400 text-xs uppercase tracking-wider">
+                      <th className="p-4">Date</th>
+                      <th className="p-4">Game Item</th>
+                      <th className="p-4">Amount</th>
+                      <th className="p-4">Pay Method</th>
+                      <th className="p-4">Receipt (Slip)</th>
+                      <th className="p-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-sm text-gray-300">
+                    {orders.map((order) => (
+                      <tr key={order.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                        <td className="p-4">{new Date(order.created_at).toLocaleDateString()} <span className="text-[10px] text-gray-500 block">{new Date(order.created_at).toLocaleTimeString()}</span></td>
+                        <td className="p-4 font-bold text-white">{order.game_name} <span className="text-[10px] text-pink-400 block font-normal">{order.item_name}</span></td>
+                        <td className="p-4 font-bold text-[#00f2fe]">{order.price.toLocaleString()} Ks</td>
+                        <td className="p-4 uppercase text-[10px] font-bold">{order.payment_method || 'N/A'}</td>
+                        <td className="p-4">
+                          {order.slip_url ? (
+                            <a href={order.slip_url} target="_blank" rel="noopener noreferrer" className="bg-pink-600/20 text-pink-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-pink-600/40 transition-colors border border-pink-500/30">
+                              ပြေစာကြည့်ရန် 🖼️
+                            </a>
+                          ) : (
+                            <span className="text-gray-500 text-xs italic">No Slip</span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full ${order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
+                            {order.status === 'pending' ? 'Pending' : 'Done'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {orders.length === 0 && <div className="text-center text-gray-500 py-10">ငွေပေးချေမှုမှတ်တမ်း မရှိသေးပါ</div>}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'mapping' && (
             <div>
               <div className="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
-                <h2 className="text-white text-lg font-bold">💰 ဈေးနှုန်းများ တိုက်ရိုက်ပြင်ဆင်ရန်</h2>
-                <button onClick={handleSavePrices} disabled={isSaving} className={`font-bold text-sm px-6 py-2.5 rounded-xl transition-colors ${isSaving ? 'bg-gray-500 text-gray-300' : 'bg-green-600 hover:bg-green-500 text-white'}`}>
+                <h2 className="text-white text-lg font-bold">💰 ဈေးနှုန်းများ (Mapping) တိုက်ရိုက်ပြင်ဆင်ရန်</h2>
+                <button onClick={handleSavePrices} disabled={isSaving} className={`font-bold text-sm px-6 py-2.5 rounded-xl transition-colors ${isSaving ? 'bg-gray-500 text-gray-300' : 'bg-green-600 hover:bg-green-500 text-white shadow-[0_0_15px_rgba(22,163,74,0.4)]'}`}>
                   {isSaving ? 'သိမ်းဆည်းနေသည်...' : 'Save Changes'}
                 </button>
               </div>
 
-              {saveSuccess && <div className="bg-green-500/20 text-green-400 p-3 rounded-xl text-sm font-bold text-center mb-6">✅ ဈေးနှုန်းများကို Database သို့ အောင်မြင်စွာ မှတ်သားထားပါသည်။</div>}
+              {saveSuccess && <div className="bg-green-500/20 text-green-400 border border-green-500/30 p-3 rounded-xl text-sm font-bold text-center mb-6">✅ ဈေးနှုန်းအသစ်များကို Database သို့ အောင်မြင်စွာ မှတ်သားထားပါသည်။</div>}
 
               <div className="space-y-4">
                 {Object.entries(gamePrices).map(([categoryKey, items]) => (
                   <div key={categoryKey} className="bg-[#1c1e32] rounded-2xl border border-white/5 overflow-hidden">
-                    <button onClick={() => setExpandedCategory(expandedCategory === categoryKey ? null : categoryKey)} className="w-full flex justify-between items-center p-5 focus:outline-none">
+                    <button onClick={() => setExpandedCategory(expandedCategory === categoryKey ? null : categoryKey)} className="w-full flex justify-between items-center p-5 focus:outline-none hover:bg-white/5 transition-colors">
                       <h3 className="text-white font-bold text-base">🎮 {categoryNames[categoryKey] || categoryKey}</h3>
-                      <span className="text-gray-400 bg-black/20 px-3 py-1 rounded-full text-xs">{items.length} items</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-400 bg-black/30 px-3 py-1 rounded-full text-xs font-bold">{items.length} items</span>
+                        <span className="text-gray-500 text-xs">{expandedCategory === categoryKey ? '▼' : '▶'}</span>
+                      </div>
                     </button>
 
                     {expandedCategory === categoryKey && (
                       <div className="p-5 border-t border-white/5 bg-[#0a0b14]/50">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                          {items.map((item) => (
-                            <div key={item.id} className="bg-[#141627] p-4 rounded-xl border border-white/5 flex flex-col justify-between">
-                              <h3 className="text-white font-bold text-xs mb-3">{item.name}</h3>
+                          {(items as any[]).map((item) => (
+                            <div key={item.id} className="bg-[#141627] p-4 rounded-xl border border-white/5 flex flex-col justify-between shadow-inner">
+                              <div>
+                                <h3 className="text-white font-bold text-xs mb-1">{item.name}</h3>
+                                <p className="text-gray-500 text-[10px] mb-3">{item.bonus || 'No bonus'}</p>
+                              </div>
                               <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-xs">Ks</span>
-                                <input type="number" value={item.price} onChange={(e) => handlePriceChange(categoryKey as keyof typeof gamePrices, item.id, e.target.value)} className="w-full bg-[#070b19] border border-white/10 rounded-lg py-2 pl-9 pr-3 text-white text-sm font-bold focus:border-blue-500 outline-none" />
+                                <input type="number" value={item.price} onChange={(e) => handlePriceChange(categoryKey as keyof typeof gamePrices, item.id, e.target.value)} className="w-full bg-[#070b19] border border-white/10 rounded-lg py-2.5 pl-10 pr-3 text-white text-sm font-bold focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none transition-all" />
                               </div>
                             </div>
                           ))}
@@ -300,6 +355,7 @@ export default function AdminPanel() {
               </div>
             </div>
           )}
+          
         </div>
       </div>
     </main>
