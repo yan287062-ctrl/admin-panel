@@ -164,26 +164,26 @@ export default function AdminPanel() {
     }
   };
 
-  // Wallet ငွေဖြည့်ခြင်းကို အတည်ပြုပေးခြင်း
-  const approveWalletTopup = async (id: string, phone: string, amount: number) => {
-    if (!window.confirm(`ဖုန်းနံပါတ် ${phone} သို့ ငွေ ${amount} Ks ဖြည့်သွင်းပေးမည်မှာ သေချာပါသလား?`)) return;
+  // Wallet ငွေဖြည့်ခြင်းကို အတည်ပြုပေးခြင်း (Phone အစား Email သို့ ပြောင်းလဲထားပါသည်)
+  const approveWalletTopup = async (id: string, email: string, amount: number) => {
+    if (!window.confirm(`Email အကောင့် ${email} သို့ ငွေ ${amount} Ks ဖြည့်သွင်းပေးမည်မှာ သေချာပါသလား?`)) return;
     
     try {
-      // ၁။ လက်ရှိ User ရဲ့ Wallet ကို စစ်ဆေးခြင်း
+      // ၁။ လက်ရှိ User ရဲ့ Wallet ကို စစ်ဆေးခြင်း (email ဖြင့် ရှာမည်)
       const { data: walletData, error: walletError } = await supabase
         .from('users_wallet')
         .select('balance')
-        .eq('phone', phone)
+        .eq('email', email)
         .single();
       
       let newBalance = amount;
       if (walletData) {
         // အကောင့်ရှိပြီးသားဆိုရင် ငွေပေါင်းထည့်မည်
         newBalance += walletData.balance;
-        await supabase.from('users_wallet').update({ balance: newBalance }).eq('phone', phone);
+        await supabase.from('users_wallet').update({ balance: newBalance }).eq('email', email);
       } else {
         // အကောင့်မရှိသေးရင် အသစ်ဖွင့်ပေးပြီး ငွေထည့်မည်
-        await supabase.from('users_wallet').insert([{ phone: phone, balance: newBalance }]);
+        await supabase.from('users_wallet').insert([{ email: email, balance: newBalance }]);
       }
       
       // ၂။ မှတ်တမ်းကို 'done' အဖြစ် ပြောင်းလဲခြင်း
@@ -339,7 +339,8 @@ export default function AdminPanel() {
                     </div>
 
                     <div className="bg-[#0a0b14]/50 p-3 rounded-xl my-4 text-sm space-y-2">
-                      <div className="flex justify-between"><span className="text-gray-400">ဖုန်းနံပါတ်:</span> <span className="text-white font-bold">{topup.phone}</span></div>
+                      {/* ဖုန်းနံပါတ်နေရာတွင် Email ဖြင့် ပြောင်းလဲပြသထားပါသည် */}
+                      <div className="flex justify-between"><span className="text-gray-400">Email:</span> <span className="text-white font-bold">{topup.email}</span></div>
                       <div className="flex justify-between"><span className="text-gray-400">Pay Method:</span> <span className="text-white font-bold uppercase">{topup.type || 'N/A'}</span></div>
                       <div className="flex justify-between"><span className="text-gray-400">ရက်စွဲ:</span> <span className="text-gray-300 text-xs">{new Date(topup.created_at).toLocaleString()}</span></div>
                     </div>
@@ -351,7 +352,8 @@ export default function AdminPanel() {
                     )}
 
                     <div className="flex gap-2">
-                      {topup.status === 'pending' && <button onClick={() => approveWalletTopup(topup.id, topup.phone, topup.amount)} className="flex-1 bg-green-600/90 hover:bg-green-500 text-white text-xs font-bold py-2.5 rounded-lg transition-colors">✔️ အတည်ပြုမည် (Approve)</button>}
+                      {/* အတည်ပြုသည့် နေရာတွင်လည်း Email ကိုသာ ပို့ပေးပါသည် */}
+                      {topup.status === 'pending' && <button onClick={() => approveWalletTopup(topup.id, topup.email, topup.amount)} className="flex-1 bg-green-600/90 hover:bg-green-500 text-white text-xs font-bold py-2.5 rounded-lg transition-colors">✔️ အတည်ပြုမည် (Approve)</button>}
                       <button onClick={() => deleteWalletTopup(topup.id)} className="px-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold py-2.5 rounded-lg transition-colors">ဖျက်မည်</button>
                     </div>
                   </div>
