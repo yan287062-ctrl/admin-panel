@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { savePricesToDb } from './actions/supabase';
 
-const supabaseUrl = 'https://lejfhsuwajmzikmudmcs.supabase.co';
+// Admin Panel တွင်လည်း VPN မလိုဘဲ သုံးနိုင်ရန် User Shop ၏ Proxy လမ်းကြောင်းကို အသုံးပြုထားပါသည်
+const supabaseUrl = 'https://painggyishop.vercel.app/api/supabase';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlamZoc3V3YWptemlrbXVkbWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NjA4NzUsImV4cCI6MjEwMzMzNjg3NX0.x3EVXbqCmrq0yiGlKI6GrWadKWU9TuXKs5F3w8uJNQA';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -86,20 +87,23 @@ const initialGamePrices = {
     { id: 'smile_1', name: 'Brl 300', price: 25800 },
     { id: 'smile_2', name: 'Brl 1000', price: 83800 },
     { id: 'smile_3', name: 'Brl 5000', price: 419000 }
-  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })) // <--- ပြဿနာကို ဤနေရာတွင် ဖြေရှင်းထားသည်
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' }))
 };
 
 export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [activeTab, setActiveTab] = useState<'orders' | 'transactions' | 'mapping'>('orders'); 
+  // Wallet တက်ဘ်အသစ် ပေါင်းထည့်ထားပါသည်
+  const [activeTab, setActiveTab] = useState<'orders' | 'wallet' | 'mapping'>('orders'); 
   const [orders, setOrders] = useState<any[]>([]);
+  const [walletTopups, setWalletTopups] = useState<any[]>([]);
   const [gamePrices, setGamePrices] = useState(initialGamePrices);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // 1. ဈေးနှုန်းများ ဆွဲယူခြင်း
   const fetchRealPrices = async () => {
     try {
       const { data, error } = await supabase.from('game_prices').select('*');
@@ -118,24 +122,95 @@ export default function AdminPanel() {
     }
   };
 
+  // 2. ဂိမ်းအော်ဒါများ ဆွဲယူခြင်း
+  const fetchOrders = async () => {
+    try {
+      const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+      if (data) setOrders(data);
+    } catch (err) {
+      console.log("Order Fetch Error:", err);
+    }
+  };
+
+  // 3. Wallet ငွေဖြည့်မှတ်တမ်းများ ဆွဲယူခြင်း
+  const fetchWalletTopups = async () => {
+    try {
+      const { data, error } = await supabase.from('wallet_history').select('*').order('created_at', { ascending: false });
+      if (data) setWalletTopups(data);
+    } catch (err) {
+      console.log("Wallet Fetch Error:", err);
+    }
+  };
+
   useEffect(() => {
-    if (isLoggedIn && activeTab === 'mapping') {
-      fetchRealPrices();
+    if (isLoggedIn) {
+      if (activeTab === 'orders') fetchOrders();
+      if (activeTab === 'wallet') fetchWalletTopups();
+      if (activeTab === 'mapping') fetchRealPrices();
     }
   }, [isLoggedIn, activeTab]);
 
+  // အော်ဒါ ပြီးစီးကြောင်း သတ်မှတ်ခြင်း
+  const markAsDone = async (id: string) => {
+    await supabase.from('orders').update({ status: 'done' }).eq('id', id);
+    fetchOrders();
+  };
+
+  // အော်ဒါ ဖျက်ခြင်း
+  const deleteOrder = async (id: string) => {
+    if (window.confirm("သေချာပြီလား? အော်ဒါကို ဖျက်ပစ်ပါမည်။")) {
+      await supabase.from('orders').delete().eq('id', id);
+      fetchOrders();
+    }
+  };
+
+  // Wallet ငွေဖြည့်ခြင်းကို အတည်ပြုပေးခြင်း
+  const approveWalletTopup = async (id: string, phone: string, amount: number) => {
+    if (!window.confirm(`ဖုန်းနံပါတ် ${phone} သို့ ငွေ ${amount} Ks ဖြည့်သွင်းပေးမည်မှာ သေချာပါသလား?`)) return;
+    
+    try {
+      // ၁။ လက်ရှိ User ရဲ့ Wallet ကို စစ်ဆေးခြင်း
+      const { data: walletData, error: walletError } = await supabase
+        .from('users_wallet')
+        .select('balance')
+        .eq('phone', phone)
+        .single();
+      
+      let newBalance = amount;
+      if (walletData) {
+        // အကောင့်ရှိပြီးသားဆိုရင် ငွေပေါင်းထည့်မည်
+        newBalance += walletData.balance;
+        await supabase.from('users_wallet').update({ balance: newBalance }).eq('phone', phone);
+      } else {
+        // အကောင့်မရှိသေးရင် အသစ်ဖွင့်ပေးပြီး ငွေထည့်မည်
+        await supabase.from('users_wallet').insert([{ phone: phone, balance: newBalance }]);
+      }
+      
+      // ၂။ မှတ်တမ်းကို 'done' အဖြစ် ပြောင်းလဲခြင်း
+      await supabase.from('wallet_history').update({ status: 'done' }).eq('id', id);
+      
+      fetchWalletTopups();
+      alert("✅ Wallet သို့ ငွေဖြည့်သွင်းခြင်း အောင်မြင်ပါသည်!");
+    } catch (err: any) {
+      alert("Error approving wallet: " + err.message);
+    }
+  };
+
+  // Wallet မှတ်တမ်းဖျက်ခြင်း
+  const deleteWalletTopup = async (id: string) => {
+    if (window.confirm("သေချာပြီလား? ငွေဖြည့်မှတ်တမ်းကို ဖျက်ပစ်ပါမည်။")) {
+      await supabase.from('wallet_history').delete().eq('id', id);
+      fetchWalletTopups();
+    }
+  };
+
   const handleSavePrices = async () => {
     setIsSaving(true);
-    
     const allItems: any[] = [];
     Object.entries(gamePrices).forEach(([cat, items]) => {
       (items as any[]).forEach(item => {
         allItems.push({
-          id: item.id,
-          category: cat,
-          name: item.name,
-          bonus: item.bonus || 'No bonus',
-          price: Number(item.price)
+          id: item.id, category: cat, name: item.name, bonus: item.bonus || 'No bonus', price: Number(item.price)
         });
       });
     });
@@ -159,31 +234,6 @@ export default function AdminPanel() {
         ...prev,
         [category]: prev[category].map(item => item.id === id ? { ...item, price: numericPrice } : item)
       }));
-    }
-  };
-
-  const fetchOrders = async () => {
-    try {
-      const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-      if (data) setOrders(data);
-    } catch (err) {
-      console.log("Order Fetch Error:", err);
-    }
-  };
-
-  useEffect(() => {
-    if (isLoggedIn && (activeTab === 'orders' || activeTab === 'transactions')) fetchOrders();
-  }, [isLoggedIn, activeTab]);
-
-  const markAsDone = async (id: string) => {
-    await supabase.from('orders').update({ status: 'done' }).eq('id', id);
-    fetchOrders();
-  };
-
-  const deleteOrder = async (id: string) => {
-    if (window.confirm("သေချာပြီလား? အော်ဒါကို ဖျက်ပစ်ပါမည်။")) {
-      await supabase.from('orders').delete().eq('id', id);
-      fetchOrders();
     }
   };
 
@@ -219,18 +269,19 @@ export default function AdminPanel() {
         <div className="bg-[#141627] p-4 rounded-2xl border border-white/5 flex flex-wrap gap-4 justify-between items-center">
           <h1 className="text-white font-bold text-sm">Paing Gyi Admin Panel</h1>
           <div className="flex gap-2">
-            <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === 'orders' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400 hover:text-white'}`}>Orders</button>
-            <button onClick={() => setActiveTab('transactions')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === 'transactions' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400 hover:text-white'}`}>Transactions</button>
-            <button onClick={() => setActiveTab('mapping')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === 'mapping' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400 hover:text-white'}`}>Mapping</button>
+            <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === 'orders' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400 hover:text-white'}`}>စောင့်ဆိုင်းစာရင်း (Orders)</button>
+            <button onClick={() => setActiveTab('wallet')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === 'wallet' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400 hover:text-white'}`}>ငွေဖြည့်တောင်းဆိုမှုများ</button>
+            <button onClick={() => setActiveTab('mapping')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === 'mapping' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400 hover:text-white'}`}>ဈေးနှုန်းပြင်ဆင်ရန်</button>
           </div>
         </div>
 
         <div className="bg-[#141627] rounded-2xl border border-white/5 p-6 min-h-[600px]">
           
+          {/* TAB 1: Game Orders */}
           {activeTab === 'orders' && (
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-white text-lg font-bold">📦 လက်ရှိ အော်ဒါစာရင်းများ</h2>
+                <h2 className="text-white text-lg font-bold">📦 ဂိမ်းအော်ဒါများ</h2>
                 <button onClick={fetchOrders} className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 hover:bg-blue-500/30">🔄 Refresh</button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -247,11 +298,18 @@ export default function AdminPanel() {
                     <div className="bg-[#0a0b14]/50 p-3 rounded-xl my-4 text-sm space-y-2">
                       <div className="flex justify-between"><span className="text-gray-400">Player ID:</span> <span className="text-white font-bold">{order.player_id}</span></div>
                       {order.zone_id && <div className="flex justify-between"><span className="text-gray-400">Zone ID:</span> <span className="text-white font-bold">{order.zone_id}</span></div>}
+                      <div className="flex justify-between"><span className="text-gray-400">Pay Method:</span> <span className="text-white font-bold uppercase">{order.payment_method}</span></div>
                       <div className="flex justify-between pt-2 border-t border-white/5"><span className="text-gray-400">ကျသင့်ငွေ:</span> <span className="text-[#00f2fe] font-bold">{order.price.toLocaleString()} Ks</span></div>
                     </div>
+                    
+                    {order.slip_url && (
+                       <a href={order.slip_url} target="_blank" rel="noopener noreferrer" className="block text-center mb-4 bg-pink-600/20 text-pink-400 px-3 py-2 rounded-lg text-xs font-bold hover:bg-pink-600/40 transition-colors border border-pink-500/30">
+                         ပြေစာ (Screenshot) ကြည့်ရန် 🖼️
+                       </a>
+                    )}
 
                     <div className="flex gap-2">
-                      {order.status === 'pending' && <button onClick={() => markAsDone(order.id)} className="flex-1 bg-green-600/90 hover:bg-green-500 text-white text-xs font-bold py-2.5 rounded-lg transition-colors">✔️ စိန်ဖြည့်ပြီးပါပြီ (Mark Done)</button>}
+                      {order.status === 'pending' && <button onClick={() => markAsDone(order.id)} className="flex-1 bg-green-600/90 hover:bg-green-500 text-white text-xs font-bold py-2.5 rounded-lg transition-colors">✔️ စိန်ဖြည့်ပြီးပါပြီ</button>}
                       <button onClick={() => deleteOrder(order.id)} className="px-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold py-2.5 rounded-lg transition-colors">ဖျက်မည်</button>
                     </div>
                   </div>
@@ -261,59 +319,53 @@ export default function AdminPanel() {
             </div>
           )}
 
-          {activeTab === 'transactions' && (
+          {/* TAB 2: Wallet Topups */}
+          {activeTab === 'wallet' && (
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-white text-lg font-bold">💳 ငွေသွင်းပြေစာ (Transactions) စစ်ဆေးရန်</h2>
-                <button onClick={fetchOrders} className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 hover:bg-blue-500/30">🔄 Refresh</button>
+                <h2 className="text-white text-lg font-bold">💳 Wallet ငွေဖြည့်တောင်းဆိုမှုများ</h2>
+                <button onClick={fetchWalletTopups} className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 hover:bg-blue-500/30">🔄 Refresh</button>
               </div>
               
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-white/10 text-gray-400 text-xs uppercase tracking-wider">
-                      <th className="p-4">Date</th>
-                      <th className="p-4">Game Item</th>
-                      <th className="p-4">Amount</th>
-                      <th className="p-4">Pay Method</th>
-                      <th className="p-4">Receipt (Slip)</th>
-                      <th className="p-4">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm text-gray-300">
-                    {orders.map((order) => (
-                      <tr key={order.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                        <td className="p-4">{new Date(order.created_at).toLocaleDateString()} <span className="text-[10px] text-gray-500 block">{new Date(order.created_at).toLocaleTimeString()}</span></td>
-                        <td className="p-4 font-bold text-white">{order.game_name} <span className="text-[10px] text-pink-400 block font-normal">{order.item_name}</span></td>
-                        <td className="p-4 font-bold text-[#00f2fe]">{order.price.toLocaleString()} Ks</td>
-                        <td className="p-4 uppercase text-[10px] font-bold">{order.payment_method || 'N/A'}</td>
-                        <td className="p-4">
-                          {order.slip_url ? (
-                            <a href={order.slip_url} target="_blank" rel="noopener noreferrer" className="bg-pink-600/20 text-pink-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-pink-600/40 transition-colors border border-pink-500/30">
-                              ပြေစာကြည့်ရန် 🖼️
-                            </a>
-                          ) : (
-                            <span className="text-gray-500 text-xs italic">No Slip</span>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full ${order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
-                            {order.status === 'pending' ? 'Pending' : 'Done'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {orders.length === 0 && <div className="text-center text-gray-500 py-10">ငွေပေးချေမှုမှတ်တမ်း မရှိသေးပါ</div>}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {walletTopups.map((topup) => (
+                  <div key={topup.id} className="bg-[#1c1e32] border border-white/10 p-5 rounded-2xl relative overflow-hidden">
+                    {topup.status === 'done' && <div className="absolute top-0 right-0 bg-green-500/20 text-green-400 px-3 py-1 rounded-bl-lg text-[10px] font-bold">✅ ဖြည့်သွင်းပြီး</div>}
+                    {topup.status === 'pending' && <div className="absolute top-0 right-0 bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-bl-lg text-[10px] font-bold">⏳ စောင့်ဆိုင်းဆဲ</div>}
+                    
+                    <div className="mt-2">
+                      <h3 className="text-gray-400 font-bold text-xs uppercase mb-1">Topup Request</h3>
+                      <p className="text-white font-black text-xl text-[#00f2fe]">{Number(topup.amount).toLocaleString()} Ks</p>
+                    </div>
+
+                    <div className="bg-[#0a0b14]/50 p-3 rounded-xl my-4 text-sm space-y-2">
+                      <div className="flex justify-between"><span className="text-gray-400">ဖုန်းနံပါတ်:</span> <span className="text-white font-bold">{topup.phone}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-400">Pay Method:</span> <span className="text-white font-bold uppercase">{topup.type || 'N/A'}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-400">ရက်စွဲ:</span> <span className="text-gray-300 text-xs">{new Date(topup.created_at).toLocaleString()}</span></div>
+                    </div>
+
+                    {topup.slip_url && (
+                       <a href={topup.slip_url} target="_blank" rel="noopener noreferrer" className="block text-center mb-4 bg-pink-600/20 text-pink-400 px-3 py-2 rounded-lg text-xs font-bold hover:bg-pink-600/40 transition-colors border border-pink-500/30">
+                         ပြေစာ (Screenshot) ကြည့်ရန် 🖼️
+                       </a>
+                    )}
+
+                    <div className="flex gap-2">
+                      {topup.status === 'pending' && <button onClick={() => approveWalletTopup(topup.id, topup.phone, topup.amount)} className="flex-1 bg-green-600/90 hover:bg-green-500 text-white text-xs font-bold py-2.5 rounded-lg transition-colors">✔️ အတည်ပြုမည် (Approve)</button>}
+                      <button onClick={() => deleteWalletTopup(topup.id)} className="px-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold py-2.5 rounded-lg transition-colors">ဖျက်မည်</button>
+                    </div>
+                  </div>
+                ))}
+                {walletTopups.length === 0 && <div className="col-span-2 text-center text-gray-500 py-10">ငွေဖြည့်တောင်းဆိုမှု မရှိသေးပါ</div>}
               </div>
             </div>
           )}
 
+          {/* TAB 3: Mapping */}
           {activeTab === 'mapping' && (
             <div>
               <div className="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
-                <h2 className="text-white text-lg font-bold">💰 ဈေးနှုန်းများ (Mapping) တိုက်ရိုက်ပြင်ဆင်ရန်</h2>
+                <h2 className="text-white text-lg font-bold">💰 ဈေးနှုန်းများ တိုက်ရိုက်ပြင်ဆင်ရန်</h2>
                 <button onClick={handleSavePrices} disabled={isSaving} className={`font-bold text-sm px-6 py-2.5 rounded-xl transition-colors ${isSaving ? 'bg-gray-500 text-gray-300' : 'bg-green-600 hover:bg-green-500 text-white shadow-[0_0_15px_rgba(22,163,74,0.4)]'}`}>
                   {isSaving ? 'သိမ်းဆည်းနေသည်...' : 'Save Changes'}
                 </button>
