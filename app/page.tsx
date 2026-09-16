@@ -239,54 +239,65 @@ export default function AdminPanel() {
     ucPack: 'UC Packs', telegram: 'Telegram Premium', heartopia: 'Heartopia', smileCoin: 'Smile Coin'
   };
 
-  // ==================== NEW LOGIN DESIGN ====================
+  // ==================== NEW LOGIN DESIGN (WITH LOGO & VIDEO) ====================
   if (!isLoggedIn) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4 bg-[#2D3A54] font-sans">
-        <div className="w-full max-w-5xl bg-white rounded-[40px] shadow-2xl flex flex-col md:flex-row overflow-hidden min-h-[600px]">
+      <main className="min-h-screen flex items-center justify-center p-4 bg-[#2D3A54] font-sans overflow-hidden relative">
+        
+        {/* နောက်ခံ အလင်းဝိုင်းလေးများ (Background Glow) */}
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#4A5C82]/30 rounded-full blur-[100px] z-0"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-[#D99B48]/20 rounded-full blur-[100px] z-0"></div>
+
+        <div className="w-full max-w-5xl bg-white rounded-[40px] shadow-2xl flex flex-col md:flex-row overflow-hidden min-h-[600px] relative z-10">
           
-          {/* LEFT COLUMN: Login Form */}
-          <div className="w-full md:w-1/2 p-10 md:p-16 flex flex-col justify-center bg-white relative">
+          {/* LEFT COLUMN: Login Form with Logo */}
+          <div className="w-full md:w-1/2 p-10 md:p-16 flex flex-col justify-center bg-white relative z-20">
             <div className="max-w-md mx-auto w-full">
               
+              {/* Logo */}
               <div className="mb-8 flex justify-center">
-                <div className="w-16 h-16 bg-[#F3F4F6] rounded-2xl flex items-center justify-center shadow-inner">
-                  <span className="text-3xl">🎮</span>
+                <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-lg border-4 border-white transform transition-transform hover:scale-105 hover:rotate-3 duration-300">
+                  <img 
+                    src="/painggyi-logo.jpg" 
+                    alt="Paing Gyi Logo" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-[#F3F4F6] flex items-center justify-center"><span class="text-4xl">🎮</span></div>';
+                    }}
+                  />
                 </div>
               </div>
 
               <div className="text-center mb-10">
-                <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">Welcome Back</h1>
+                <h1 className="text-3xl font-black text-[#2D3A54] tracking-tight mb-2">Welcome Back</h1>
                 <p className="text-gray-500 text-sm font-medium">Please enter your admin details.</p>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-5">
-                <div className="relative">
+                <div className="relative group">
                   <input 
                     type="text" 
                     placeholder="Username" 
                     value={username} 
                     onChange={e => setUsername(e.target.value)} 
-                    className="w-full rounded-2xl py-4 pl-12 pr-4 text-gray-900 font-bold bg-white border-2 border-gray-100 focus:border-[#4A5C82] focus:ring-4 focus:ring-[#4A5C82]/10 outline-none transition-all placeholder:text-gray-400 placeholder:font-medium" 
+                    className="w-full rounded-2xl py-4 pl-12 pr-4 text-[#2D3A54] font-bold bg-[#F9FAFB] border-2 border-transparent focus:bg-white focus:border-[#4A5C82] outline-none transition-all placeholder:text-gray-400 placeholder:font-medium shadow-sm" 
                   />
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#4A5C82] transition-colors">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                   </div>
                 </div>
 
-                <div className="relative">
+                <div className="relative group">
                   <input 
                     type="password" 
                     placeholder="Password" 
                     value={password} 
                     onChange={e => setPassword(e.target.value)} 
-                    className="w-full rounded-2xl py-4 pl-12 pr-12 text-gray-900 font-bold bg-white border-2 border-gray-100 focus:border-[#4A5C82] focus:ring-4 focus:ring-[#4A5C82]/10 outline-none transition-all placeholder:text-gray-400 placeholder:font-medium" 
+                    className="w-full rounded-2xl py-4 pl-12 pr-12 text-[#2D3A54] font-bold bg-[#F9FAFB] border-2 border-transparent focus:bg-white focus:border-[#4A5C82] outline-none transition-all placeholder:text-gray-400 placeholder:font-medium shadow-sm" 
                   />
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#4A5C82] transition-colors">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                  </div>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                   </div>
                 </div>
 
@@ -298,29 +309,40 @@ export default function AdminPanel() {
                   <a href="#" className="text-xs font-bold text-[#4A5C82] hover:text-[#2D3A54] transition-colors">Forgot password?</a>
                 </div>
 
-                <button type="submit" className="w-full font-bold text-white py-4 mt-8 rounded-2xl bg-[#4A5C82] hover:bg-[#3b4968] transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+                <button type="submit" className="w-full font-black text-white py-4 mt-8 rounded-2xl bg-[#4A5C82] hover:bg-[#2D3A54] transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 uppercase tracking-wider">
                   Log In
                 </button>
               </form>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Image Area (Logo ကို နေရာအပြည့် ယူထားပါသည်) */}
-          <div className="w-full md:w-1/2 bg-[#0d1636] p-4 hidden md:block">
-            <div className="w-full h-full rounded-[30px] overflow-hidden relative shadow-inner flex items-center justify-center">
-              
-              {/* `public` ဖိုင်တွဲထဲက painggyi-logo.jpg ကို ခေါ်ယူထားပါသည် */}
-              {/* object-cover က ပုံကို ဘောင်အပြည့် ကွက်တိဆန့်အောင် ညှိပေးပါသည် */}
-              <img 
-                src="/painggyi-logo.jpg" 
-                alt="Paing Gyi Game Shop Logo" 
-                className="absolute inset-0 w-full h-full object-cover"
-              />
+          {/* RIGHT COLUMN: Video Animation */}
+          <div className="w-full md:w-1/2 relative hidden md:block overflow-hidden bg-[#0d1636]">
+            
+            {/* Background Video */}
+            <video 
+              autoPlay 
+              loop 
+              muted 
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover z-0"
+            >
+              <source src="/admin-bg.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            
+            {/* Dark/Blue Overlay to make text readable */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#2D3A54]/80 to-[#0d1636]/90 z-10"></div>
 
-              {/* ပုံက အရမ်းတောက်နေရင် နည်းနည်း မှောင်ပေးချင်ရင် ဒါကို ဖွင့်သုံးနိုင်ပါတယ် */}
-              {/* <div className="absolute inset-0 bg-black/10 z-10"></div> */}
-
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+              <h2 className="text-4xl font-black tracking-widest uppercase text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] text-center leading-tight">
+                PAING GYI <br/> <span className="text-[#D99B48]">ADMIN</span>
+              </h2>
+              <p className="text-[#E4D5B7] font-medium mt-4 max-w-xs text-center text-sm opacity-90 leading-relaxed drop-shadow-md">
+                Manage your gaming store efficiently. Fast, secure, and automated system.
+              </p>
             </div>
+
           </div>
           
         </div>
