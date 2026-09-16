@@ -230,7 +230,7 @@ export default function AdminPanel() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'admin' && password === 'painggyi123') setIsLoggedIn(true);
+    if (username === 'admin' && password === 'painggyi204') setIsLoggedIn(true);
     else alert("Invalid login!");
   };
 
@@ -239,22 +239,20 @@ export default function AdminPanel() {
     ucPack: 'UC Packs', telegram: 'Telegram Premium', heartopia: 'Heartopia', smileCoin: 'Smile Coin'
   };
 
-  // ==================== NEW LOGIN DESIGN (WITH LOGO & VIDEO) ====================
+  // ==================== NEW LOGIN DESIGN (WITH VIDEO BG) ====================
   if (!isLoggedIn) {
     return (
       <main className="min-h-screen flex items-center justify-center p-4 bg-[#2D3A54] font-sans overflow-hidden relative">
         
-        {/* နောက်ခံ အလင်းဝိုင်းလေးများ (Background Glow) */}
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#4A5C82]/30 rounded-full blur-[100px] z-0"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-[#D99B48]/20 rounded-full blur-[100px] z-0"></div>
 
         <div className="w-full max-w-5xl bg-white rounded-[40px] shadow-2xl flex flex-col md:flex-row overflow-hidden min-h-[600px] relative z-10">
           
-          {/* LEFT COLUMN: Login Form with Logo */}
+          {/* LEFT COLUMN: Login Form */}
           <div className="w-full md:w-1/2 p-10 md:p-16 flex flex-col justify-center bg-white relative z-20">
             <div className="max-w-md mx-auto w-full">
               
-              {/* Logo */}
               <div className="mb-8 flex justify-center">
                 <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-lg border-4 border-white transform transition-transform hover:scale-105 hover:rotate-3 duration-300">
                   <img 
@@ -331,7 +329,7 @@ export default function AdminPanel() {
               Your browser does not support the video tag.
             </video>
             
-            {/* Dark/Blue Overlay to make text readable */}
+            {/* Dark Overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#2D3A54]/80 to-[#0d1636]/90 z-10"></div>
 
             <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
