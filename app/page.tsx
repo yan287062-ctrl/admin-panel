@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { savePricesToDb } from './actions/supabase';
 
-// Admin Panel တွင်လည်း VPN မလိုဘဲ သုံးနိုင်ရန် User Shop ၏ Proxy လမ်းကြောင်းကို အသုံးပြုထားပါသည်
 const supabaseUrl = 'https://painggyishop.vercel.app/api/supabase';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlamZoc3V3YWptemlrbXVkbWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NjA4NzUsImV4cCI6MjEwMzMzNjg3NX0.x3EVXbqCmrq0yiGlKI6GrWadKWU9TuXKs5F3w8uJNQA';
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -149,13 +148,11 @@ export default function AdminPanel() {
     }
   }, [isLoggedIn, activeTab]);
 
-  // အော်ဒါ ပြီးစီးကြောင်း သတ်မှတ်ခြင်း
   const markAsDone = async (id: string) => {
     await supabase.from('orders').update({ status: 'done' }).eq('id', id);
     fetchOrders();
   };
 
-  // အော်ဒါ ဖျက်ခြင်း
   const deleteOrder = async (id: string) => {
     if (window.confirm("သေချာပြီလား? အော်ဒါကို ဖျက်ပစ်ပါမည်။")) {
       await supabase.from('orders').delete().eq('id', id);
@@ -163,7 +160,6 @@ export default function AdminPanel() {
     }
   };
 
-  // Wallet ငွေဖြည့်ခြင်းကို အတည်ပြုပေးခြင်း
   const approveWalletTopup = async (id: string, email: string, amount: number) => {
     if (!window.confirm(`Email အကောင့် ${email} သို့ ငွေ ${amount} Ks ဖြည့်သွင်းပေးမည်မှာ သေချာပါသလား?`)) return;
     
@@ -190,7 +186,6 @@ export default function AdminPanel() {
     }
   };
 
-  // Wallet မှတ်တမ်းဖျက်ခြင်း
   const deleteWalletTopup = async (id: string) => {
     if (window.confirm("သေချာပြီလား? ငွေဖြည့်မှတ်တမ်းကို ဖျက်ပစ်ပါမည်။")) {
       await supabase.from('wallet_history').delete().eq('id', id);
@@ -204,7 +199,12 @@ export default function AdminPanel() {
     Object.entries(gamePrices).forEach(([cat, items]) => {
       (items as any[]).forEach(item => {
         allItems.push({
-          id: item.id, category: cat, name: item.name, bonus: item.bonus || 'No bonus', price: Number(item.price)
+          id: item.id, 
+          category: cat, 
+          name: item.name, 
+          bonus: item.bonus || 'No bonus', 
+          // ပို့မယ့်အချိန်ကျမှ Number အဖြစ် သေချာ ပြောင်းပို့မယ်
+          price: Number(item.price) || 0 
         });
       });
     });
@@ -222,13 +222,18 @@ export default function AdminPanel() {
   };
 
   const handlePriceChange = (category: keyof typeof gamePrices, id: string, newPrice: string) => {
-    const numericPrice = Number(newPrice);
-    if (!isNaN(numericPrice)) {
-      setGamePrices(prev => ({
-        ...prev,
-        [category]: prev[category].map(item => item.id === id ? { ...item, price: numericPrice } : item)
-      }));
+    // အရှေ့က သုညတွေကို အရင်ဖျက်ပစ်မယ်
+    let sanitizedPrice = newPrice.replace(/^0+/, '');
+    
+    // အကုန်ဖျက်လိုက်ရင် လွတ်နေတဲ့အတိုင်း ထားမယ်
+    if (sanitizedPrice === '') {
+      sanitizedPrice = ''; 
     }
+
+    setGamePrices(prev => ({
+      ...prev,
+      [category]: prev[category].map(item => item.id === id ? { ...item, price: sanitizedPrice as any } : item)
+    }));
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -389,7 +394,17 @@ export default function AdminPanel() {
                               </div>
                               <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A5C82] font-black text-xs">Ks</span>
-                                <input type="number" value={item.price} onChange={(e) => handlePriceChange(categoryKey as keyof typeof gamePrices, item.id, e.target.value)} className="w-full bg-[#E4D5B7] border-2 border-transparent rounded-lg py-2.5 pl-10 pr-3 text-[#4A5C82] text-sm font-black focus:border-[#D99B48] focus:outline-none transition-all" />
+                                <input 
+                                  type="text" 
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={item.price === 0 ? '' : item.price} 
+                                  onChange={(e) => {
+                                    const value = e.target.value.replace(/[^0-9]/g, '');
+                                    handlePriceChange(categoryKey as keyof typeof gamePrices, item.id, value);
+                                  }} 
+                                  className="w-full bg-[#E4D5B7] border-2 border-transparent rounded-lg py-2.5 pl-10 pr-3 text-[#4A5C82] text-sm font-black focus:border-[#D99B48] focus:outline-none transition-all" 
+                                />
                               </div>
                             </div>
                           ))}
