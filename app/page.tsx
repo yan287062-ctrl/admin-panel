@@ -101,7 +101,6 @@ export default function AdminPanel() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // 1. ဈေးနှုန်းများ ဆွဲယူခြင်း
   const fetchRealPrices = async () => {
     try {
       const { data, error } = await supabase.from('game_prices').select('*');
@@ -120,7 +119,6 @@ export default function AdminPanel() {
     }
   };
 
-  // 2. ဂိမ်းအော်ဒါများ ဆွဲယူခြင်း
   const fetchOrders = async () => {
     try {
       const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
@@ -130,7 +128,6 @@ export default function AdminPanel() {
     }
   };
 
-  // 3. Wallet ငွေဖြည့်မှတ်တမ်းများ ဆွဲယူခြင်း
   const fetchWalletTopups = async () => {
     try {
       const { data, error } = await supabase.from('wallet_history').select('*').order('created_at', { ascending: false });
@@ -203,7 +200,6 @@ export default function AdminPanel() {
           category: cat, 
           name: item.name, 
           bonus: item.bonus || 'No bonus', 
-          // ပို့မယ့်အချိန်ကျမှ Number အဖြစ် သေချာ ပြောင်းပို့မယ်
           price: Number(item.price) || 0 
         });
       });
@@ -222,14 +218,10 @@ export default function AdminPanel() {
   };
 
   const handlePriceChange = (category: keyof typeof gamePrices, id: string, newPrice: string) => {
-    // အရှေ့က သုညတွေကို အရင်ဖျက်ပစ်မယ်
     let sanitizedPrice = newPrice.replace(/^0+/, '');
-    
-    // အကုန်ဖျက်လိုက်ရင် လွတ်နေတဲ့အတိုင်း ထားမယ်
     if (sanitizedPrice === '') {
       sanitizedPrice = ''; 
     }
-
     setGamePrices(prev => ({
       ...prev,
       [category]: prev[category].map(item => item.id === id ? { ...item, price: sanitizedPrice as any } : item)
@@ -247,21 +239,96 @@ export default function AdminPanel() {
     ucPack: 'UC Packs', telegram: 'Telegram Premium', heartopia: 'Heartopia', smileCoin: 'Smile Coin'
   };
 
+  // ==================== NEW LOGIN DESIGN ====================
   if (!isLoggedIn) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4 bg-[#E4D5B7]">
-        <div className="w-full max-w-[420px] rounded-3xl p-8 bg-[#4A5C82] shadow-[6px_6px_0px_rgba(74,92,130,0.3)]">
-          <h1 className="text-2xl font-black text-[#E4D5B7] text-center mb-6 uppercase tracking-widest">Paing Gyi Admin</h1>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} className="w-full rounded-xl py-3 px-4 text-[#4A5C82] font-bold bg-[#E4D5B7] border-2 border-transparent focus:border-[#D99B48] focus:outline-none" />
-            <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full rounded-xl py-3 px-4 text-[#4A5C82] font-bold bg-[#E4D5B7] border-2 border-transparent focus:border-[#D99B48] focus:outline-none" />
-            <button type="submit" className="w-full font-black text-[#4A5C82] py-3 rounded-xl bg-[#D99B48] hover:bg-[#c2873b] transition-colors shadow-[4px_4px_0px_rgba(217,155,72,0.4)] uppercase">Login</button>
-          </form>
+      <main className="min-h-screen flex items-center justify-center p-4 bg-[#2D3A54] font-sans">
+        <div className="w-full max-w-5xl bg-white rounded-[40px] shadow-2xl flex flex-col md:flex-row overflow-hidden min-h-[600px]">
+          
+          {/* LEFT COLUMN: Login Form */}
+          <div className="w-full md:w-1/2 p-10 md:p-16 flex flex-col justify-center bg-white relative">
+            <div className="max-w-md mx-auto w-full">
+              
+              <div className="mb-8 flex justify-center">
+                <div className="w-16 h-16 bg-[#F3F4F6] rounded-2xl flex items-center justify-center shadow-inner">
+                  <span className="text-3xl">🎮</span>
+                </div>
+              </div>
+
+              <div className="text-center mb-10">
+                <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">Welcome Back</h1>
+                <p className="text-gray-500 text-sm font-medium">Please enter your admin details.</p>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-5">
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    placeholder="Username" 
+                    value={username} 
+                    onChange={e => setUsername(e.target.value)} 
+                    className="w-full rounded-2xl py-4 pl-12 pr-4 text-gray-900 font-bold bg-white border-2 border-gray-100 focus:border-[#4A5C82] focus:ring-4 focus:ring-[#4A5C82]/10 outline-none transition-all placeholder:text-gray-400 placeholder:font-medium" 
+                  />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <input 
+                    type="password" 
+                    placeholder="Password" 
+                    value={password} 
+                    onChange={e => setPassword(e.target.value)} 
+                    className="w-full rounded-2xl py-4 pl-12 pr-12 text-gray-900 font-bold bg-white border-2 border-gray-100 focus:border-[#4A5C82] focus:ring-4 focus:ring-[#4A5C82]/10 outline-none transition-all placeholder:text-gray-400 placeholder:font-medium" 
+                  />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                  </div>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between mt-4 px-1">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#4A5C82] focus:ring-[#4A5C82] transition-colors cursor-pointer" />
+                    <span className="text-xs font-medium text-gray-500 group-hover:text-gray-700 transition-colors">Remember me</span>
+                  </label>
+                  <a href="#" className="text-xs font-bold text-[#4A5C82] hover:text-[#2D3A54] transition-colors">Forgot password?</a>
+                </div>
+
+                <button type="submit" className="w-full font-bold text-white py-4 mt-8 rounded-2xl bg-[#4A5C82] hover:bg-[#3b4968] transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+                  Log In
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: Image Area (Logo ကို နေရာအပြည့် ယူထားပါသည်) */}
+          <div className="w-full md:w-1/2 bg-[#0d1636] p-4 hidden md:block">
+            <div className="w-full h-full rounded-[30px] overflow-hidden relative shadow-inner flex items-center justify-center">
+              
+              {/* `public` ဖိုင်တွဲထဲက painggyi-logo.jpg ကို ခေါ်ယူထားပါသည် */}
+              {/* object-cover က ပုံကို ဘောင်အပြည့် ကွက်တိဆန့်အောင် ညှိပေးပါသည် */}
+              <img 
+                src="/painggyi-logo.jpg" 
+                alt="Paing Gyi Game Shop Logo" 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+
+              {/* ပုံက အရမ်းတောက်နေရင် နည်းနည်း မှောင်ပေးချင်ရင် ဒါကို ဖွင့်သုံးနိုင်ပါတယ် */}
+              {/* <div className="absolute inset-0 bg-black/10 z-10"></div> */}
+
+            </div>
+          </div>
+          
         </div>
       </main>
     );
   }
 
+  // ==================== PANEL UI ====================
   return (
     <main className="min-h-screen bg-[#E4D5B7] p-4 md:p-8 font-sans">
       <div className="max-w-6xl mx-auto space-y-6">
