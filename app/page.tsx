@@ -94,7 +94,6 @@ export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  // Wallet တက်ဘ်အသစ် ပေါင်းထည့်ထားပါသည်
   const [activeTab, setActiveTab] = useState<'orders' | 'wallet' | 'mapping'>('orders'); 
   const [orders, setOrders] = useState<any[]>([]);
   const [walletTopups, setWalletTopups] = useState<any[]>([]);
@@ -164,12 +163,11 @@ export default function AdminPanel() {
     }
   };
 
-  // Wallet ငွေဖြည့်ခြင်းကို အတည်ပြုပေးခြင်း (Phone အစား Email သို့ ပြောင်းလဲထားပါသည်)
+  // Wallet ငွေဖြည့်ခြင်းကို အတည်ပြုပေးခြင်း
   const approveWalletTopup = async (id: string, email: string, amount: number) => {
     if (!window.confirm(`Email အကောင့် ${email} သို့ ငွေ ${amount} Ks ဖြည့်သွင်းပေးမည်မှာ သေချာပါသလား?`)) return;
     
     try {
-      // ၁။ လက်ရှိ User ရဲ့ Wallet ကို စစ်ဆေးခြင်း (email ဖြင့် ရှာမည်)
       const { data: walletData, error: walletError } = await supabase
         .from('users_wallet')
         .select('balance')
@@ -178,17 +176,13 @@ export default function AdminPanel() {
       
       let newBalance = amount;
       if (walletData) {
-        // အကောင့်ရှိပြီးသားဆိုရင် ငွေပေါင်းထည့်မည်
         newBalance += walletData.balance;
         await supabase.from('users_wallet').update({ balance: newBalance }).eq('email', email);
       } else {
-        // အကောင့်မရှိသေးရင် အသစ်ဖွင့်ပေးပြီး ငွေထည့်မည်
         await supabase.from('users_wallet').insert([{ email: email, balance: newBalance }]);
       }
       
-      // ၂။ မှတ်တမ်းကို 'done' အဖြစ် ပြောင်းလဲခြင်း
       await supabase.from('wallet_history').update({ status: 'done' }).eq('id', id);
-      
       fetchWalletTopups();
       alert("✅ Wallet သို့ ငွေဖြည့်သွင်းခြင်း အောင်မြင်ပါသည်!");
     } catch (err: any) {
@@ -250,13 +244,13 @@ export default function AdminPanel() {
 
   if (!isLoggedIn) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[#1a0b2e] to-[#d76d77]">
-        <div className="w-full max-w-[420px] rounded-3xl p-8 bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
-          <h1 className="text-2xl font-bold text-white text-center mb-6">Paing Gyi Admin</h1>
+      <main className="min-h-screen flex items-center justify-center p-4 bg-[#E4D5B7]">
+        <div className="w-full max-w-[420px] rounded-3xl p-8 bg-[#4A5C82] shadow-[6px_6px_0px_rgba(74,92,130,0.3)]">
+          <h1 className="text-2xl font-black text-[#E4D5B7] text-center mb-6 uppercase tracking-widest">Paing Gyi Admin</h1>
           <form onSubmit={handleLogin} className="space-y-4">
-            <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} className="w-full rounded-xl py-3 px-4 text-white bg-white/10 border border-white/10 focus:outline-none" />
-            <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full rounded-xl py-3 px-4 text-white bg-white/10 border border-white/10 focus:outline-none" />
-            <button type="submit" className="w-full font-bold text-white py-3 rounded-xl bg-gradient-to-r from-blue-500 to-pink-500">Login</button>
+            <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} className="w-full rounded-xl py-3 px-4 text-[#4A5C82] font-bold bg-[#E4D5B7] border-2 border-transparent focus:border-[#D99B48] focus:outline-none" />
+            <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full rounded-xl py-3 px-4 text-[#4A5C82] font-bold bg-[#E4D5B7] border-2 border-transparent focus:border-[#D99B48] focus:outline-none" />
+            <button type="submit" className="w-full font-black text-[#4A5C82] py-3 rounded-xl bg-[#D99B48] hover:bg-[#c2873b] transition-colors shadow-[4px_4px_0px_rgba(217,155,72,0.4)] uppercase">Login</button>
           </form>
         </div>
       </main>
@@ -264,57 +258,57 @@ export default function AdminPanel() {
   }
 
   return (
-    <main className="min-h-screen bg-[#070b19] p-4 md:p-8 font-sans">
+    <main className="min-h-screen bg-[#E4D5B7] p-4 md:p-8 font-sans">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="bg-[#141627] p-4 rounded-2xl border border-white/5 flex flex-wrap gap-4 justify-between items-center">
-          <h1 className="text-white font-bold text-sm">Paing Gyi Admin Panel</h1>
+        <div className="bg-[#4A5C82] p-4 rounded-2xl shadow-[4px_4px_0px_rgba(74,92,130,0.3)] flex flex-wrap gap-4 justify-between items-center">
+          <h1 className="text-[#E4D5B7] font-black text-sm uppercase tracking-wider">Paing Gyi Admin Panel</h1>
           <div className="flex gap-2">
-            <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === 'orders' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400 hover:text-white'}`}>စောင့်ဆိုင်းစာရင်း (Orders)</button>
-            <button onClick={() => setActiveTab('wallet')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === 'wallet' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400 hover:text-white'}`}>ငွေဖြည့်တောင်းဆိုမှုများ</button>
-            <button onClick={() => setActiveTab('mapping')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === 'mapping' ? 'bg-gradient-to-r from-blue-500 to-pink-500 text-white' : 'bg-[#1c1e32] text-gray-400 hover:text-white'}`}>ဈေးနှုန်းပြင်ဆင်ရန်</button>
+            <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'orders' ? 'bg-[#D99B48] text-[#4A5C82] shadow-[2px_2px_0px_rgba(217,155,72,0.4)]' : 'bg-[#2D3A54] text-[#E4D5B7]/70 hover:text-[#E4D5B7]'}`}>Orders</button>
+            <button onClick={() => setActiveTab('wallet')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'wallet' ? 'bg-[#D99B48] text-[#4A5C82] shadow-[2px_2px_0px_rgba(217,155,72,0.4)]' : 'bg-[#2D3A54] text-[#E4D5B7]/70 hover:text-[#E4D5B7]'}`}>Wallet Topups</button>
+            <button onClick={() => setActiveTab('mapping')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'mapping' ? 'bg-[#D99B48] text-[#4A5C82] shadow-[2px_2px_0px_rgba(217,155,72,0.4)]' : 'bg-[#2D3A54] text-[#E4D5B7]/70 hover:text-[#E4D5B7]'}`}>Edit Prices</button>
           </div>
         </div>
 
-        <div className="bg-[#141627] rounded-2xl border border-white/5 p-6 min-h-[600px]">
+        <div className="bg-[#4A5C82] rounded-3xl shadow-[6px_6px_0px_rgba(74,92,130,0.2)] p-6 min-h-[600px]">
           
           {/* TAB 1: Game Orders */}
           {activeTab === 'orders' && (
             <div>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-white text-lg font-bold">📦 ဂိမ်းအော်ဒါများ</h2>
-                <button onClick={fetchOrders} className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 hover:bg-blue-500/30">🔄 Refresh</button>
+              <div className="flex justify-between items-center mb-6 border-b border-[#E4D5B7]/10 pb-4">
+                <h2 className="text-[#E4D5B7] text-lg font-black uppercase tracking-wide">📦 Game Orders</h2>
+                <button onClick={fetchOrders} className="text-xs bg-[#2D3A54] text-[#E4D5B7] px-4 py-2 rounded-lg font-bold hover:bg-[#1f293d]">🔄 Refresh</button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {orders.map((order) => (
-                  <div key={order.id} className="bg-[#1c1e32] border border-white/10 p-5 rounded-2xl relative overflow-hidden">
-                    {order.status === 'done' && <div className="absolute top-0 right-0 bg-green-500/20 text-green-400 px-3 py-1 rounded-bl-lg text-[10px] font-bold">✅ ပြီးစီး</div>}
-                    {order.status === 'pending' && <div className="absolute top-0 right-0 bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-bl-lg text-[10px] font-bold">⏳ စောင့်ဆိုင်းဆဲ</div>}
+                  <div key={order.id} className="bg-[#2D3A54] border border-[#4A5C82] p-5 rounded-2xl relative overflow-hidden shadow-inner">
+                    {order.status === 'done' && <div className="absolute top-0 right-0 bg-green-500/90 text-white px-3 py-1 rounded-bl-lg text-[10px] font-black uppercase">✅ Done</div>}
+                    {order.status === 'pending' && <div className="absolute top-0 right-0 bg-[#D99B48] text-[#4A5C82] px-3 py-1 rounded-bl-lg text-[10px] font-black uppercase">⏳ Pending</div>}
                     
                     <div className="mt-2">
-                      <h3 className="text-pink-500 font-bold text-sm uppercase">{order.game_name}</h3>
-                      <p className="text-white font-black text-lg mt-1">{order.item_name}</p>
+                      <h3 className="text-[#D99B48] font-bold text-sm uppercase">{order.game_name}</h3>
+                      <p className="text-[#E4D5B7] font-black text-lg mt-1">{order.item_name}</p>
                     </div>
 
-                    <div className="bg-[#0a0b14]/50 p-3 rounded-xl my-4 text-sm space-y-2">
-                      <div className="flex justify-between"><span className="text-gray-400">Player ID:</span> <span className="text-white font-bold">{order.player_id}</span></div>
-                      {order.zone_id && <div className="flex justify-between"><span className="text-gray-400">Zone ID:</span> <span className="text-white font-bold">{order.zone_id}</span></div>}
-                      <div className="flex justify-between"><span className="text-gray-400">Pay Method:</span> <span className="text-white font-bold uppercase">{order.payment_method}</span></div>
-                      <div className="flex justify-between pt-2 border-t border-white/5"><span className="text-gray-400">ကျသင့်ငွေ:</span> <span className="text-[#00f2fe] font-bold">{order.price.toLocaleString()} Ks</span></div>
+                    <div className="bg-[#4A5C82] p-3 rounded-xl my-4 text-sm space-y-2">
+                      <div className="flex justify-between"><span className="text-[#E4D5B7]/70 font-medium">Player ID:</span> <span className="text-white font-bold">{order.player_id}</span></div>
+                      {order.zone_id && <div className="flex justify-between"><span className="text-[#E4D5B7]/70 font-medium">Zone ID:</span> <span className="text-white font-bold">{order.zone_id}</span></div>}
+                      <div className="flex justify-between"><span className="text-[#E4D5B7]/70 font-medium">Pay Method:</span> <span className="text-white font-bold uppercase">{order.payment_method}</span></div>
+                      <div className="flex justify-between pt-2 border-t border-[#E4D5B7]/10"><span className="text-[#E4D5B7]/70 font-medium">Price:</span> <span className="text-[#D99B48] font-black">{order.price.toLocaleString()} Ks</span></div>
                     </div>
                     
                     {order.slip_url && (
-                       <a href={order.slip_url} target="_blank" rel="noopener noreferrer" className="block text-center mb-4 bg-pink-600/20 text-pink-400 px-3 py-2 rounded-lg text-xs font-bold hover:bg-pink-600/40 transition-colors border border-pink-500/30">
-                         ပြေစာ (Screenshot) ကြည့်ရန် 🖼️
+                       <a href={order.slip_url} target="_blank" rel="noopener noreferrer" className="block text-center mb-4 bg-[#4A5C82] text-[#E4D5B7] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[#1f293d] transition-colors border border-[#E4D5B7]/20 uppercase">
+                         View Screenshot 🖼️
                        </a>
                     )}
 
                     <div className="flex gap-2">
-                      {order.status === 'pending' && <button onClick={() => markAsDone(order.id)} className="flex-1 bg-green-600/90 hover:bg-green-500 text-white text-xs font-bold py-2.5 rounded-lg transition-colors">✔️ စိန်ဖြည့်ပြီးပါပြီ</button>}
-                      <button onClick={() => deleteOrder(order.id)} className="px-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold py-2.5 rounded-lg transition-colors">ဖျက်မည်</button>
+                      {order.status === 'pending' && <button onClick={() => markAsDone(order.id)} className="flex-1 bg-green-600 hover:bg-green-500 text-white text-xs font-black py-2.5 rounded-lg transition-colors uppercase">✔️ Mark as Done</button>}
+                      <button onClick={() => deleteOrder(order.id)} className="px-4 bg-red-500/20 hover:bg-red-500/40 text-red-300 text-xs font-bold py-2.5 rounded-lg transition-colors">Delete</button>
                     </div>
                   </div>
                 ))}
-                {orders.length === 0 && <div className="col-span-2 text-center text-gray-500 py-10">အော်ဒါ မရှိသေးပါ</div>}
+                {orders.length === 0 && <div className="col-span-2 text-center text-[#E4D5B7]/50 font-bold py-10">No orders yet</div>}
               </div>
             </div>
           )}
@@ -322,43 +316,41 @@ export default function AdminPanel() {
           {/* TAB 2: Wallet Topups */}
           {activeTab === 'wallet' && (
             <div>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-white text-lg font-bold">💳 Wallet ငွေဖြည့်တောင်းဆိုမှုများ</h2>
-                <button onClick={fetchWalletTopups} className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 hover:bg-blue-500/30">🔄 Refresh</button>
+              <div className="flex justify-between items-center mb-6 border-b border-[#E4D5B7]/10 pb-4">
+                <h2 className="text-[#E4D5B7] text-lg font-black uppercase tracking-wide">💳 Wallet Requests</h2>
+                <button onClick={fetchWalletTopups} className="text-xs bg-[#2D3A54] text-[#E4D5B7] px-4 py-2 rounded-lg font-bold hover:bg-[#1f293d]">🔄 Refresh</button>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {walletTopups.map((topup) => (
-                  <div key={topup.id} className="bg-[#1c1e32] border border-white/10 p-5 rounded-2xl relative overflow-hidden">
-                    {topup.status === 'done' && <div className="absolute top-0 right-0 bg-green-500/20 text-green-400 px-3 py-1 rounded-bl-lg text-[10px] font-bold">✅ ဖြည့်သွင်းပြီး</div>}
-                    {topup.status === 'pending' && <div className="absolute top-0 right-0 bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-bl-lg text-[10px] font-bold">⏳ စောင့်ဆိုင်းဆဲ</div>}
+                  <div key={topup.id} className="bg-[#2D3A54] border border-[#4A5C82] p-5 rounded-2xl relative overflow-hidden shadow-inner">
+                    {topup.status === 'done' && <div className="absolute top-0 right-0 bg-green-500/90 text-white px-3 py-1 rounded-bl-lg text-[10px] font-black uppercase">✅ Done</div>}
+                    {topup.status === 'pending' && <div className="absolute top-0 right-0 bg-[#D99B48] text-[#4A5C82] px-3 py-1 rounded-bl-lg text-[10px] font-black uppercase">⏳ Pending</div>}
                     
                     <div className="mt-2">
-                      <h3 className="text-gray-400 font-bold text-xs uppercase mb-1">Topup Request</h3>
-                      <p className="text-white font-black text-xl text-[#00f2fe]">{Number(topup.amount).toLocaleString()} Ks</p>
+                      <h3 className="text-[#E4D5B7]/70 font-bold text-xs uppercase mb-1 tracking-wider">Topup Request</h3>
+                      <p className="text-[#D99B48] font-black text-xl">{Number(topup.amount).toLocaleString()} Ks</p>
                     </div>
 
-                    <div className="bg-[#0a0b14]/50 p-3 rounded-xl my-4 text-sm space-y-2">
-                      {/* ဖုန်းနံပါတ်နေရာတွင် Email ဖြင့် ပြောင်းလဲပြသထားပါသည် */}
-                      <div className="flex justify-between"><span className="text-gray-400">Email:</span> <span className="text-white font-bold">{topup.email}</span></div>
-                      <div className="flex justify-between"><span className="text-gray-400">Pay Method:</span> <span className="text-white font-bold uppercase">{topup.type || 'N/A'}</span></div>
-                      <div className="flex justify-between"><span className="text-gray-400">ရက်စွဲ:</span> <span className="text-gray-300 text-xs">{new Date(topup.created_at).toLocaleString()}</span></div>
+                    <div className="bg-[#4A5C82] p-3 rounded-xl my-4 text-sm space-y-2">
+                      <div className="flex justify-between"><span className="text-[#E4D5B7]/70 font-medium">Email:</span> <span className="text-white font-bold">{topup.email}</span></div>
+                      <div className="flex justify-between"><span className="text-[#E4D5B7]/70 font-medium">Pay Method:</span> <span className="text-white font-bold uppercase">{topup.type || 'N/A'}</span></div>
+                      <div className="flex justify-between"><span className="text-[#E4D5B7]/70 font-medium">Date:</span> <span className="text-[#E4D5B7]/50 text-xs">{new Date(topup.created_at).toLocaleString()}</span></div>
                     </div>
 
                     {topup.slip_url && (
-                       <a href={topup.slip_url} target="_blank" rel="noopener noreferrer" className="block text-center mb-4 bg-pink-600/20 text-pink-400 px-3 py-2 rounded-lg text-xs font-bold hover:bg-pink-600/40 transition-colors border border-pink-500/30">
-                         ပြေစာ (Screenshot) ကြည့်ရန် 🖼️
+                       <a href={topup.slip_url} target="_blank" rel="noopener noreferrer" className="block text-center mb-4 bg-[#4A5C82] text-[#E4D5B7] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[#1f293d] transition-colors border border-[#E4D5B7]/20 uppercase">
+                         View Screenshot 🖼️
                        </a>
                     )}
 
                     <div className="flex gap-2">
-                      {/* အတည်ပြုသည့် နေရာတွင်လည်း Email ကိုသာ ပို့ပေးပါသည် */}
-                      {topup.status === 'pending' && <button onClick={() => approveWalletTopup(topup.id, topup.email, topup.amount)} className="flex-1 bg-green-600/90 hover:bg-green-500 text-white text-xs font-bold py-2.5 rounded-lg transition-colors">✔️ အတည်ပြုမည် (Approve)</button>}
-                      <button onClick={() => deleteWalletTopup(topup.id)} className="px-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold py-2.5 rounded-lg transition-colors">ဖျက်မည်</button>
+                      {topup.status === 'pending' && <button onClick={() => approveWalletTopup(topup.id, topup.email, topup.amount)} className="flex-1 bg-green-600 hover:bg-green-500 text-white text-xs font-black py-2.5 rounded-lg transition-colors uppercase">✔️ Approve</button>}
+                      <button onClick={() => deleteWalletTopup(topup.id)} className="px-4 bg-red-500/20 hover:bg-red-500/40 text-red-300 text-xs font-bold py-2.5 rounded-lg transition-colors">Delete</button>
                     </div>
                   </div>
                 ))}
-                {walletTopups.length === 0 && <div className="col-span-2 text-center text-gray-500 py-10">ငွေဖြည့်တောင်းဆိုမှု မရှိသေးပါ</div>}
+                {walletTopups.length === 0 && <div className="col-span-2 text-center text-[#E4D5B7]/50 font-bold py-10">No wallet requests yet</div>}
               </div>
             </div>
           )}
@@ -366,38 +358,38 @@ export default function AdminPanel() {
           {/* TAB 3: Mapping */}
           {activeTab === 'mapping' && (
             <div>
-              <div className="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
-                <h2 className="text-white text-lg font-bold">💰 ဈေးနှုန်းများ တိုက်ရိုက်ပြင်ဆင်ရန်</h2>
-                <button onClick={handleSavePrices} disabled={isSaving} className={`font-bold text-sm px-6 py-2.5 rounded-xl transition-colors ${isSaving ? 'bg-gray-500 text-gray-300' : 'bg-green-600 hover:bg-green-500 text-white shadow-[0_0_15px_rgba(22,163,74,0.4)]'}`}>
-                  {isSaving ? 'သိမ်းဆည်းနေသည်...' : 'Save Changes'}
+              <div className="flex justify-between items-center border-b border-[#E4D5B7]/10 pb-4 mb-6">
+                <h2 className="text-[#E4D5B7] text-lg font-black uppercase tracking-wide">💰 Edit Prices</h2>
+                <button onClick={handleSavePrices} disabled={isSaving} className={`font-black uppercase tracking-wider text-sm px-6 py-2.5 rounded-xl transition-all ${isSaving ? 'bg-[#2D3A54] text-[#E4D5B7]/50' : 'bg-[#D99B48] hover:bg-[#c2873b] text-[#4A5C82] shadow-[2px_2px_0px_rgba(217,155,72,0.4)]'}`}>
+                  {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
 
-              {saveSuccess && <div className="bg-green-500/20 text-green-400 border border-green-500/30 p-3 rounded-xl text-sm font-bold text-center mb-6">✅ ဈေးနှုန်းအသစ်များကို Database သို့ အောင်မြင်စွာ မှတ်သားထားပါသည်။</div>}
+              {saveSuccess && <div className="bg-green-500 text-white p-3 rounded-xl text-sm font-black tracking-wide text-center mb-6 uppercase shadow-md">✅ Prices saved successfully!</div>}
 
               <div className="space-y-4">
                 {Object.entries(gamePrices).map(([categoryKey, items]) => (
-                  <div key={categoryKey} className="bg-[#1c1e32] rounded-2xl border border-white/5 overflow-hidden">
-                    <button onClick={() => setExpandedCategory(expandedCategory === categoryKey ? null : categoryKey)} className="w-full flex justify-between items-center p-5 focus:outline-none hover:bg-white/5 transition-colors">
-                      <h3 className="text-white font-bold text-base">🎮 {categoryNames[categoryKey] || categoryKey}</h3>
+                  <div key={categoryKey} className="bg-[#2D3A54] rounded-2xl border border-[#4A5C82] overflow-hidden shadow-sm">
+                    <button onClick={() => setExpandedCategory(expandedCategory === categoryKey ? null : categoryKey)} className="w-full flex justify-between items-center p-5 focus:outline-none hover:bg-[#1f293d] transition-colors">
+                      <h3 className="text-[#E4D5B7] font-black text-base uppercase tracking-wider">🎮 {categoryNames[categoryKey] || categoryKey}</h3>
                       <div className="flex items-center gap-3">
-                        <span className="text-gray-400 bg-black/30 px-3 py-1 rounded-full text-xs font-bold">{items.length} items</span>
-                        <span className="text-gray-500 text-xs">{expandedCategory === categoryKey ? '▼' : '▶'}</span>
+                        <span className="text-[#4A5C82] bg-[#E4D5B7] px-3 py-1 rounded-full text-xs font-bold">{items.length} items</span>
+                        <span className="text-[#E4D5B7]/50 text-xs">{expandedCategory === categoryKey ? '▼' : '▶'}</span>
                       </div>
                     </button>
 
                     {expandedCategory === categoryKey && (
-                      <div className="p-5 border-t border-white/5 bg-[#0a0b14]/50">
+                      <div className="p-5 border-t border-[#4A5C82] bg-[#2D3A54]">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                           {(items as any[]).map((item) => (
-                            <div key={item.id} className="bg-[#141627] p-4 rounded-xl border border-white/5 flex flex-col justify-between shadow-inner">
+                            <div key={item.id} className="bg-[#4A5C82] p-4 rounded-xl shadow-inner flex flex-col justify-between">
                               <div>
-                                <h3 className="text-white font-bold text-xs mb-1">{item.name}</h3>
-                                <p className="text-gray-500 text-[10px] mb-3">{item.bonus || 'No bonus'}</p>
+                                <h3 className="text-white font-bold text-xs mb-1 uppercase">{item.name}</h3>
+                                <p className="text-[#E4D5B7]/70 font-medium text-[10px] mb-3 uppercase">{item.bonus || 'No bonus'}</p>
                               </div>
                               <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-xs">Ks</span>
-                                <input type="number" value={item.price} onChange={(e) => handlePriceChange(categoryKey as keyof typeof gamePrices, item.id, e.target.value)} className="w-full bg-[#070b19] border border-white/10 rounded-lg py-2.5 pl-10 pr-3 text-white text-sm font-bold focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none transition-all" />
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A5C82] font-black text-xs">Ks</span>
+                                <input type="number" value={item.price} onChange={(e) => handlePriceChange(categoryKey as keyof typeof gamePrices, item.id, e.target.value)} className="w-full bg-[#E4D5B7] border-2 border-transparent rounded-lg py-2.5 pl-10 pr-3 text-[#4A5C82] text-sm font-black focus:border-[#D99B48] focus:outline-none transition-all" />
                               </div>
                             </div>
                           ))}
