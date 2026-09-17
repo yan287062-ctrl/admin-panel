@@ -93,13 +93,24 @@ export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [activeTab, setActiveTab] = useState<'orders' | 'wallet' | 'mapping'>('orders'); 
+  
+  // Update tabs to match the sidebar design (Dashboard added)
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'wallet' | 'mapping'>('dashboard'); 
+  
   const [orders, setOrders] = useState<any[]>([]);
   const [walletTopups, setWalletTopups] = useState<any[]>([]);
   const [gamePrices, setGamePrices] = useState(initialGamePrices);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Mock data for Dashboard stats (In a real app, this would come from Supabase)
+  const [stats, setStats] = useState({
+    activeUsers: 142,
+    totalSales: '8,450,000',
+    pendingOrders: 0,
+    totalUsers: 1250
+  });
 
   const fetchRealPrices = async () => {
     try {
@@ -122,7 +133,12 @@ export default function AdminPanel() {
   const fetchOrders = async () => {
     try {
       const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-      if (data) setOrders(data);
+      if (data) {
+        setOrders(data);
+        // Update pending orders count for dashboard
+        const pendingCount = data.filter(order => order.status === 'pending').length;
+        setStats(prev => ({ ...prev, pendingOrders: pendingCount }));
+      }
     } catch (err) {
       console.log("Order Fetch Error:", err);
     }
@@ -139,11 +155,11 @@ export default function AdminPanel() {
 
   useEffect(() => {
     if (isLoggedIn) {
-      if (activeTab === 'orders') fetchOrders();
-      if (activeTab === 'wallet') fetchWalletTopups();
-      if (activeTab === 'mapping') fetchRealPrices();
+      fetchOrders();
+      fetchWalletTopups();
+      fetchRealPrices();
     }
-  }, [isLoggedIn, activeTab]);
+  }, [isLoggedIn]);
 
   const markAsDone = async (id: string) => {
     await supabase.from('orders').update({ status: 'done' }).eq('id', id);
@@ -230,7 +246,7 @@ export default function AdminPanel() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'admin' && password === 'painggyi204') setIsLoggedIn(true);
+    if (username === 'admin' && password === 'painggyi123') setIsLoggedIn(true);
     else alert("Invalid login!");
   };
 
@@ -239,108 +255,55 @@ export default function AdminPanel() {
     ucPack: 'UC Packs', telegram: 'Telegram Premium', heartopia: 'Heartopia', smileCoin: 'Smile Coin'
   };
 
-  // ==================== NEW LOGIN DESIGN (WITH VIDEO BG) ====================
+  // ==================== LOGIN SCREEN ====================
   if (!isLoggedIn) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4 bg-[#2D3A54] font-sans overflow-hidden relative">
-        
-        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#4A5C82]/30 rounded-full blur-[100px] z-0"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-[#D99B48]/20 rounded-full blur-[100px] z-0"></div>
-
-        <div className="w-full max-w-5xl bg-white rounded-[40px] shadow-2xl flex flex-col md:flex-row overflow-hidden min-h-[600px] relative z-10">
+      <main className="min-h-screen flex items-center justify-center p-4 bg-[#f0f2f5] font-sans">
+        <div className="w-full max-w-4xl bg-white rounded-[30px] shadow-2xl flex overflow-hidden min-h-[500px]">
           
-          {/* LEFT COLUMN: Login Form */}
-          <div className="w-full md:w-1/2 p-10 md:p-16 flex flex-col justify-center bg-white relative z-20">
-            <div className="max-w-md mx-auto w-full">
+          {/* LEFT: Login Form */}
+          <div className="w-full md:w-1/2 p-12 flex flex-col justify-center bg-white relative">
+            <div className="max-w-xs mx-auto w-full">
               
               <div className="mb-8 flex justify-center">
-                <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-lg border-4 border-white transform transition-transform hover:scale-105 hover:rotate-3 duration-300">
-                  <img 
-                    src="/painggyi-logo.jpg" 
-                    alt="Paing Gyi Logo" 
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-[#F3F4F6] flex items-center justify-center"><span class="text-4xl">🎮</span></div>';
-                    }}
-                  />
+                <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-md">
+                  <img src="/painggyi-logo.jpg" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-[#f3f4f6] flex items-center justify-center"><span class="text-3xl">🎮</span></div>'; }} />
                 </div>
               </div>
 
-              <div className="text-center mb-10">
-                <h1 className="text-3xl font-black text-[#2D3A54] tracking-tight mb-2">Welcome Back</h1>
-                <p className="text-gray-500 text-sm font-medium">Please enter your admin details.</p>
+              <div className="text-center mb-8">
+                <h1 className="text-2xl font-black text-gray-800 mb-1">Welcome Back</h1>
+                <p className="text-gray-500 text-xs font-medium">Please enter your admin details.</p>
               </div>
 
-              <form onSubmit={handleLogin} className="space-y-5">
-                <div className="relative group">
-                  <input 
-                    type="text" 
-                    placeholder="Username" 
-                    value={username} 
-                    onChange={e => setUsername(e.target.value)} 
-                    className="w-full rounded-2xl py-4 pl-12 pr-4 text-[#2D3A54] font-bold bg-[#F9FAFB] border-2 border-transparent focus:bg-white focus:border-[#4A5C82] outline-none transition-all placeholder:text-gray-400 placeholder:font-medium shadow-sm" 
-                  />
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#4A5C82] transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="relative">
+                  <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} className="w-full rounded-xl py-3 pl-10 pr-4 text-gray-800 font-bold bg-[#f8fafc] border border-gray-100 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 text-sm" />
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                   </div>
                 </div>
 
-                <div className="relative group">
-                  <input 
-                    type="password" 
-                    placeholder="Password" 
-                    value={password} 
-                    onChange={e => setPassword(e.target.value)} 
-                    className="w-full rounded-2xl py-4 pl-12 pr-12 text-[#2D3A54] font-bold bg-[#F9FAFB] border-2 border-transparent focus:bg-white focus:border-[#4A5C82] outline-none transition-all placeholder:text-gray-400 placeholder:font-medium shadow-sm" 
-                  />
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#4A5C82] transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                <div className="relative">
+                  <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full rounded-xl py-3 pl-10 pr-10 text-gray-800 font-bold bg-[#f8fafc] border border-gray-100 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 text-sm" />
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between mt-4 px-1">
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#4A5C82] focus:ring-[#4A5C82] transition-colors cursor-pointer" />
-                    <span className="text-xs font-medium text-gray-500 group-hover:text-gray-700 transition-colors">Remember me</span>
-                  </label>
-                  <a href="#" className="text-xs font-bold text-[#4A5C82] hover:text-[#2D3A54] transition-colors">Forgot password?</a>
-                </div>
-
-                <button type="submit" className="w-full font-black text-white py-4 mt-8 rounded-2xl bg-[#4A5C82] hover:bg-[#2D3A54] transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 uppercase tracking-wider">
+                <button type="submit" className="w-full font-bold text-white py-3 mt-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 transition-all shadow-lg text-sm">
                   Log In
                 </button>
               </form>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Video Animation */}
-          <div className="w-full md:w-1/2 relative hidden md:block overflow-hidden bg-[#0d1636]">
-            
-            {/* Background Video */}
-            <video 
-              autoPlay 
-              loop 
-              muted 
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover z-0"
-            >
-              <source src="/admin-bg.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-            
-            {/* Dark Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#2D3A54]/80 to-[#0d1636]/90 z-10"></div>
-
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-              <h2 className="text-4xl font-black tracking-widest uppercase text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] text-center leading-tight">
-                PAING GYI <br/> <span className="text-[#D99B48]">ADMIN</span>
-              </h2>
-              <p className="text-[#E4D5B7] font-medium mt-4 max-w-xs text-center text-sm opacity-90 leading-relaxed drop-shadow-md">
-                Manage your gaming store efficiently. Fast, secure, and automated system.
-              </p>
+          {/* RIGHT: Image / Branding */}
+          <div className="w-full md:w-1/2 bg-indigo-900 relative hidden md:block">
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <h2 className="text-3xl font-black tracking-widest text-white mb-2">PAING GYI</h2>
+              <h3 className="text-lg font-bold text-indigo-300">ADMIN PORTAL</h3>
             </div>
-
           </div>
           
         </div>
@@ -348,139 +311,314 @@ export default function AdminPanel() {
     );
   }
 
-  // ==================== PANEL UI ====================
+  // ==================== ADMIN DASHBOARD (SIDEBAR DESIGN) ====================
   return (
-    <main className="min-h-screen bg-[#E4D5B7] p-4 md:p-8 font-sans">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="bg-[#4A5C82] p-4 rounded-2xl shadow-[4px_4px_0px_rgba(74,92,130,0.3)] flex flex-wrap gap-4 justify-between items-center">
-          <h1 className="text-[#E4D5B7] font-black text-sm uppercase tracking-wider">Paing Gyi Admin Panel</h1>
-          <div className="flex gap-2">
-            <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'orders' ? 'bg-[#D99B48] text-[#4A5C82] shadow-[2px_2px_0px_rgba(217,155,72,0.4)]' : 'bg-[#2D3A54] text-[#E4D5B7]/70 hover:text-[#E4D5B7]'}`}>Orders</button>
-            <button onClick={() => setActiveTab('wallet')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'wallet' ? 'bg-[#D99B48] text-[#4A5C82] shadow-[2px_2px_0px_rgba(217,155,72,0.4)]' : 'bg-[#2D3A54] text-[#E4D5B7]/70 hover:text-[#E4D5B7]'}`}>Wallet Topups</button>
-            <button onClick={() => setActiveTab('mapping')} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'mapping' ? 'bg-[#D99B48] text-[#4A5C82] shadow-[2px_2px_0px_rgba(217,155,72,0.4)]' : 'bg-[#2D3A54] text-[#E4D5B7]/70 hover:text-[#E4D5B7]'}`}>Edit Prices</button>
+    <main className="min-h-screen bg-[#f3f4f6] font-sans flex h-screen overflow-hidden">
+      
+      {/* SIDEBAR */}
+      <div className="w-64 bg-indigo-700 text-white flex flex-col m-4 rounded-[30px] shadow-xl overflow-hidden relative z-20">
+        
+        {/* Logo Area */}
+        <div className="p-8 flex items-center justify-center border-b border-indigo-600/50">
+          <div className="flex flex-col items-center">
+            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-3 shadow-md overflow-hidden">
+               <img src="/painggyi-logo.jpg" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="text-2xl">🎮</span>'; }} />
+            </div>
+            <h1 className="font-black text-sm tracking-widest uppercase">Paing Gyi</h1>
+            <p className="text-indigo-300 text-[10px] font-bold tracking-widest uppercase">Admin</p>
           </div>
         </div>
 
-        <div className="bg-[#4A5C82] rounded-3xl shadow-[6px_6px_0px_rgba(74,92,130,0.2)] p-6 min-h-[600px]">
+        {/* Navigation Links */}
+        <div className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          <button 
+            onClick={() => setActiveTab('dashboard')} 
+            className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'dashboard' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            Dashboard
+          </button>
           
-          {/* TAB 1: Game Orders */}
-          {activeTab === 'orders' && (
-            <div>
-              <div className="flex justify-between items-center mb-6 border-b border-[#E4D5B7]/10 pb-4">
-                <h2 className="text-[#E4D5B7] text-lg font-black uppercase tracking-wide">📦 Game Orders</h2>
-                <button onClick={fetchOrders} className="text-xs bg-[#2D3A54] text-[#E4D5B7] px-4 py-2 rounded-lg font-bold hover:bg-[#1f293d]">🔄 Refresh</button>
+          <button 
+            onClick={() => setActiveTab('orders')} 
+            className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'orders' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}
+          >
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+              Orders
+            </div>
+            {stats.pendingOrders > 0 && (
+              <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{stats.pendingOrders}</span>
+            )}
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('wallet')} 
+            className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'wallet' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+            Wallet Topups
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('mapping')} 
+            className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'mapping' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+            Edit Prices
+          </button>
+        </div>
+
+        {/* User Info / Logout Area at Bottom */}
+        <div className="p-4 mt-auto">
+          <button onClick={() => setIsLoggedIn(false)} className="w-full flex items-center gap-3 px-5 py-3 bg-indigo-800 hover:bg-indigo-900 rounded-2xl text-sm font-bold transition-colors">
+             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+             Logout
+          </button>
+        </div>
+      </div>
+
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        {/* Top Header */}
+        <div className="h-20 flex items-center justify-between px-8 bg-transparent">
+           <h2 className="text-2xl font-black text-gray-800 capitalize tracking-tight">
+             {activeTab === 'mapping' ? 'Edit Game Prices' : activeTab}
+           </h2>
+           
+           <div className="flex items-center gap-4">
+              <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-indigo-600 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+              </button>
+              <div className="h-10 w-10 bg-indigo-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
+                <span className="text-indigo-700 font-black text-sm">AD</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           </div>
+        </div>
+
+        {/* Scrollable Content Container */}
+        <div className="flex-1 overflow-y-auto px-8 pb-8">
+          
+          {/* ================= TAB 1: DASHBOARD ================= */}
+          {activeTab === 'dashboard' && (
+            <div className="space-y-6">
+              
+              {/* Stats Cards Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-[24px] shadow-lg text-white">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    </div>
+                    <span className="bg-white/20 px-2 py-1 rounded-lg text-xs font-bold">+12%</span>
+                  </div>
+                  <h3 className="text-indigo-100 text-sm font-bold mb-1">Active Users (Live)</h3>
+                  <p className="text-3xl font-black">{stats.activeUsers}</p>
+                </div>
+
+                <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                  </div>
+                  <h3 className="text-gray-400 text-sm font-bold mb-1">Total Sales</h3>
+                  <p className="text-3xl font-black text-gray-800">{stats.totalSales} <span className="text-sm text-gray-400">Ks</span></p>
+                </div>
+
+                <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full -mr-10 -mt-10 z-0"></div>
+                  <div className="relative z-10">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      </div>
+                    </div>
+                    <h3 className="text-gray-400 text-sm font-bold mb-1">Pending Orders</h3>
+                    <p className="text-3xl font-black text-gray-800">{stats.pendingOrders}</p>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+                  </div>
+                  <h3 className="text-gray-400 text-sm font-bold mb-1">Total Users</h3>
+                  <p className="text-3xl font-black text-gray-800">{stats.totalUsers}</p>
+                </div>
+              </div>
+
+              {/* Big Chart Area (Placeholder for UI) */}
+              <div className="bg-white rounded-[30px] p-8 shadow-sm border border-gray-100 min-h-[300px] flex flex-col justify-center items-center relative overflow-hidden">
+                 <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                 <div className="text-center z-10">
+                   <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                     <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                   </div>
+                   <h3 className="text-lg font-bold text-gray-800 mb-2">Detailed Analytics Coming Soon</h3>
+                   <p className="text-gray-500 text-sm max-w-sm">Connect with Google Analytics or Vercel Analytics to see live traffic, visitor maps, and conversion rates here.</p>
+                   <button className="mt-6 px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-md hover:bg-indigo-700">Setup Analytics</button>
+                 </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ================= TAB 2: ORDERS ================= */}
+          {activeTab === 'orders' && (
+            <div className="bg-white rounded-[30px] p-6 shadow-sm border border-gray-100 min-h-full">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-gray-800">Recent Transactions</h3>
+                <button onClick={fetchOrders} className="text-xs bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold hover:bg-gray-200">🔄 Refresh</button>
+              </div>
+
+              <div className="space-y-4">
                 {orders.map((order) => (
-                  <div key={order.id} className="bg-[#2D3A54] border border-[#4A5C82] p-5 rounded-2xl relative overflow-hidden shadow-inner">
-                    {order.status === 'done' && <div className="absolute top-0 right-0 bg-green-500/90 text-white px-3 py-1 rounded-bl-lg text-[10px] font-black uppercase">✅ Done</div>}
-                    {order.status === 'pending' && <div className="absolute top-0 right-0 bg-[#D99B48] text-[#4A5C82] px-3 py-1 rounded-bl-lg text-[10px] font-black uppercase">⏳ Pending</div>}
+                  <div key={order.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl border border-gray-100 hover:border-indigo-100 hover:shadow-md transition-all bg-gray-50/50">
                     
-                    <div className="mt-2">
-                      <h3 className="text-[#D99B48] font-bold text-sm uppercase">{order.game_name}</h3>
-                      <p className="text-[#E4D5B7] font-black text-lg mt-1">{order.item_name}</p>
+                    <div className="flex items-center gap-4 mb-4 md:mb-0">
+                      <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 font-black text-xs uppercase">
+                        {order.game_name.substring(0, 3)}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-800 text-sm">{order.item_name}</h4>
+                        <p className="text-xs text-gray-500 mt-1 font-medium">ID: {order.player_id} {order.zone_id ? `| Zone: ${order.zone_id}` : ''}</p>
+                      </div>
                     </div>
 
-                    <div className="bg-[#4A5C82] p-3 rounded-xl my-4 text-sm space-y-2">
-                      <div className="flex justify-between"><span className="text-[#E4D5B7]/70 font-medium">Player ID:</span> <span className="text-white font-bold">{order.player_id}</span></div>
-                      {order.zone_id && <div className="flex justify-between"><span className="text-[#E4D5B7]/70 font-medium">Zone ID:</span> <span className="text-white font-bold">{order.zone_id}</span></div>}
-                      <div className="flex justify-between"><span className="text-[#E4D5B7]/70 font-medium">Pay Method:</span> <span className="text-white font-bold uppercase">{order.payment_method}</span></div>
-                      <div className="flex justify-between pt-2 border-t border-[#E4D5B7]/10"><span className="text-[#E4D5B7]/70 font-medium">Price:</span> <span className="text-[#D99B48] font-black">{order.price.toLocaleString()} Ks</span></div>
+                    <div className="flex flex-col md:items-end gap-1 mb-4 md:mb-0">
+                      <span className="font-black text-indigo-600">{order.price.toLocaleString()} Ks</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{order.payment_method}</span>
                     </div>
-                    
-                    {order.slip_url && (
-                       <a href={order.slip_url} target="_blank" rel="noopener noreferrer" className="block text-center mb-4 bg-[#4A5C82] text-[#E4D5B7] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[#1f293d] transition-colors border border-[#E4D5B7]/20 uppercase">
-                         View Screenshot 🖼️
-                       </a>
-                    )}
 
-                    <div className="flex gap-2">
-                      {order.status === 'pending' && <button onClick={() => markAsDone(order.id)} className="flex-1 bg-green-600 hover:bg-green-500 text-white text-xs font-black py-2.5 rounded-lg transition-colors uppercase">✔️ Mark as Done</button>}
-                      <button onClick={() => deleteOrder(order.id)} className="px-4 bg-red-500/20 hover:bg-red-500/40 text-red-300 text-xs font-bold py-2.5 rounded-lg transition-colors">Delete</button>
+                    <div className="flex items-center gap-3">
+                       {order.status === 'pending' ? (
+                         <span className="px-3 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-lg uppercase">Pending</span>
+                       ) : (
+                         <span className="px-3 py-1 bg-green-100 text-green-600 text-xs font-bold rounded-lg uppercase">Done</span>
+                       )}
+
+                       {order.slip_url && (
+                         <a href={order.slip_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300" title="View Screenshot">
+                           🖼️
+                         </a>
+                       )}
+                       
+                       {order.status === 'pending' && (
+                         <button onClick={() => markAsDone(order.id)} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700" title="Mark as Done">
+                           ✔️
+                         </button>
+                       )}
+                       
+                       <button onClick={() => deleteOrder(order.id)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200" title="Delete">
+                         🗑️
+                       </button>
                     </div>
                   </div>
                 ))}
-                {orders.length === 0 && <div className="col-span-2 text-center text-[#E4D5B7]/50 font-bold py-10">No orders yet</div>}
+                {orders.length === 0 && <div className="text-center text-gray-400 font-bold py-10">No orders yet</div>}
               </div>
             </div>
           )}
 
-          {/* TAB 2: Wallet Topups */}
+          {/* ================= TAB 3: WALLET TOPUPS ================= */}
           {activeTab === 'wallet' && (
-            <div>
-              <div className="flex justify-between items-center mb-6 border-b border-[#E4D5B7]/10 pb-4">
-                <h2 className="text-[#E4D5B7] text-lg font-black uppercase tracking-wide">💳 Wallet Requests</h2>
-                <button onClick={fetchWalletTopups} className="text-xs bg-[#2D3A54] text-[#E4D5B7] px-4 py-2 rounded-lg font-bold hover:bg-[#1f293d]">🔄 Refresh</button>
+            <div className="bg-white rounded-[30px] p-6 shadow-sm border border-gray-100 min-h-full">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-gray-800">Wallet Top-up Requests</h3>
+                <button onClick={fetchWalletTopups} className="text-xs bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold hover:bg-gray-200">🔄 Refresh</button>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 {walletTopups.map((topup) => (
-                  <div key={topup.id} className="bg-[#2D3A54] border border-[#4A5C82] p-5 rounded-2xl relative overflow-hidden shadow-inner">
-                    {topup.status === 'done' && <div className="absolute top-0 right-0 bg-green-500/90 text-white px-3 py-1 rounded-bl-lg text-[10px] font-black uppercase">✅ Done</div>}
-                    {topup.status === 'pending' && <div className="absolute top-0 right-0 bg-[#D99B48] text-[#4A5C82] px-3 py-1 rounded-bl-lg text-[10px] font-black uppercase">⏳ Pending</div>}
+                  <div key={topup.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl border border-gray-100 hover:border-indigo-100 hover:shadow-md transition-all bg-gray-50/50">
                     
-                    <div className="mt-2">
-                      <h3 className="text-[#E4D5B7]/70 font-bold text-xs uppercase mb-1 tracking-wider">Topup Request</h3>
-                      <p className="text-[#D99B48] font-black text-xl">{Number(topup.amount).toLocaleString()} Ks</p>
+                    <div className="flex items-center gap-4 mb-4 md:mb-0">
+                      <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-800 text-sm">{topup.email}</h4>
+                        <p className="text-xs text-gray-500 mt-1 font-medium">{new Date(topup.created_at).toLocaleString()}</p>
+                      </div>
                     </div>
 
-                    <div className="bg-[#4A5C82] p-3 rounded-xl my-4 text-sm space-y-2">
-                      <div className="flex justify-between"><span className="text-[#E4D5B7]/70 font-medium">Email:</span> <span className="text-white font-bold">{topup.email}</span></div>
-                      <div className="flex justify-between"><span className="text-[#E4D5B7]/70 font-medium">Pay Method:</span> <span className="text-white font-bold uppercase">{topup.type || 'N/A'}</span></div>
-                      <div className="flex justify-between"><span className="text-[#E4D5B7]/70 font-medium">Date:</span> <span className="text-[#E4D5B7]/50 text-xs">{new Date(topup.created_at).toLocaleString()}</span></div>
+                    <div className="flex flex-col md:items-end gap-1 mb-4 md:mb-0">
+                      <span className="font-black text-indigo-600">{Number(topup.amount).toLocaleString()} Ks</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{topup.type || 'N/A'}</span>
                     </div>
 
-                    {topup.slip_url && (
-                       <a href={topup.slip_url} target="_blank" rel="noopener noreferrer" className="block text-center mb-4 bg-[#4A5C82] text-[#E4D5B7] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[#1f293d] transition-colors border border-[#E4D5B7]/20 uppercase">
-                         View Screenshot 🖼️
-                       </a>
-                    )}
+                    <div className="flex items-center gap-3">
+                       {topup.status === 'pending' ? (
+                         <span className="px-3 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-lg uppercase">Pending</span>
+                       ) : (
+                         <span className="px-3 py-1 bg-green-100 text-green-600 text-xs font-bold rounded-lg uppercase">Approved</span>
+                       )}
 
-                    <div className="flex gap-2">
-                      {topup.status === 'pending' && <button onClick={() => approveWalletTopup(topup.id, topup.email, topup.amount)} className="flex-1 bg-green-600 hover:bg-green-500 text-white text-xs font-black py-2.5 rounded-lg transition-colors uppercase">✔️ Approve</button>}
-                      <button onClick={() => deleteWalletTopup(topup.id)} className="px-4 bg-red-500/20 hover:bg-red-500/40 text-red-300 text-xs font-bold py-2.5 rounded-lg transition-colors">Delete</button>
+                       {topup.slip_url && (
+                         <a href={topup.slip_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300" title="View Screenshot">
+                           🖼️
+                         </a>
+                       )}
+                       
+                       {topup.status === 'pending' && (
+                         <button onClick={() => approveWalletTopup(topup.id, topup.email, topup.amount)} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700" title="Approve">
+                           ✔️
+                         </button>
+                       )}
+                       
+                       <button onClick={() => deleteWalletTopup(topup.id)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200" title="Delete">
+                         🗑️
+                       </button>
                     </div>
+
                   </div>
                 ))}
-                {walletTopups.length === 0 && <div className="col-span-2 text-center text-[#E4D5B7]/50 font-bold py-10">No wallet requests yet</div>}
+                {walletTopups.length === 0 && <div className="text-center text-gray-400 font-bold py-10">No wallet requests yet</div>}
               </div>
             </div>
           )}
 
-          {/* TAB 3: Mapping */}
+          {/* ================= TAB 4: MAPPING (EDIT PRICES) ================= */}
           {activeTab === 'mapping' && (
-            <div>
-              <div className="flex justify-between items-center border-b border-[#E4D5B7]/10 pb-4 mb-6">
-                <h2 className="text-[#E4D5B7] text-lg font-black uppercase tracking-wide">💰 Edit Prices</h2>
-                <button onClick={handleSavePrices} disabled={isSaving} className={`font-black uppercase tracking-wider text-sm px-6 py-2.5 rounded-xl transition-all ${isSaving ? 'bg-[#2D3A54] text-[#E4D5B7]/50' : 'bg-[#D99B48] hover:bg-[#c2873b] text-[#4A5C82] shadow-[2px_2px_0px_rgba(217,155,72,0.4)]'}`}>
-                  {isSaving ? 'Saving...' : 'Save Changes'}
+            <div className="bg-white rounded-[30px] p-6 md:p-8 shadow-sm border border-gray-100 min-h-full">
+              
+              <div className="flex justify-between items-center mb-8">
+                <p className="text-gray-500 text-sm font-medium">Update prices for all games. Changes reflect instantly.</p>
+                <button onClick={handleSavePrices} disabled={isSaving} className={`px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-md ${isSaving ? 'bg-gray-200 text-gray-500' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>
+                  {isSaving ? 'Saving...' : 'Save All Changes'}
                 </button>
               </div>
 
-              {saveSuccess && <div className="bg-green-500 text-white p-3 rounded-xl text-sm font-black tracking-wide text-center mb-6 uppercase shadow-md">✅ Prices saved successfully!</div>}
+              {saveSuccess && <div className="bg-green-50 border border-green-200 text-green-600 p-4 rounded-xl text-sm font-bold text-center mb-6">✅ Prices saved successfully!</div>}
 
               <div className="space-y-4">
                 {Object.entries(gamePrices).map(([categoryKey, items]) => (
-                  <div key={categoryKey} className="bg-[#2D3A54] rounded-2xl border border-[#4A5C82] overflow-hidden shadow-sm">
-                    <button onClick={() => setExpandedCategory(expandedCategory === categoryKey ? null : categoryKey)} className="w-full flex justify-between items-center p-5 focus:outline-none hover:bg-[#1f293d] transition-colors">
-                      <h3 className="text-[#E4D5B7] font-black text-base uppercase tracking-wider">🎮 {categoryNames[categoryKey] || categoryKey}</h3>
+                  <div key={categoryKey} className="border border-gray-200 rounded-2xl overflow-hidden bg-white">
+                    <button onClick={() => setExpandedCategory(expandedCategory === categoryKey ? null : categoryKey)} className="w-full flex justify-between items-center p-5 bg-gray-50/50 hover:bg-gray-100/50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <span className="text-[#4A5C82] bg-[#E4D5B7] px-3 py-1 rounded-full text-xs font-bold">{items.length} items</span>
-                        <span className="text-[#E4D5B7]/50 text-xs">{expandedCategory === categoryKey ? '▼' : '▶'}</span>
+                        <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-xs uppercase">{categoryKey.substring(0,2)}</div>
+                        <h3 className="text-gray-800 font-bold text-sm uppercase tracking-wide">{categoryNames[categoryKey] || categoryKey}</h3>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs font-bold text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-200">{items.length} items</span>
+                        <svg className={`w-5 h-5 text-gray-400 transition-transform ${expandedCategory === categoryKey ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                       </div>
                     </button>
 
                     {expandedCategory === categoryKey && (
-                      <div className="p-5 border-t border-[#4A5C82] bg-[#2D3A54]">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      <div className="p-6 border-t border-gray-100 bg-white">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                           {(items as any[]).map((item) => (
-                            <div key={item.id} className="bg-[#4A5C82] p-4 rounded-xl shadow-inner flex flex-col justify-between">
-                              <div>
-                                <h3 className="text-white font-bold text-xs mb-1 uppercase">{item.name}</h3>
-                                <p className="text-[#E4D5B7]/70 font-medium text-[10px] mb-3 uppercase">{item.bonus || 'No bonus'}</p>
-                              </div>
+                            <div key={item.id} className="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 transition-colors bg-gray-50/30">
+                              <h3 className="text-gray-800 font-bold text-xs mb-1 uppercase">{item.name}</h3>
+                              <p className="text-gray-400 font-medium text-[10px] mb-4 uppercase">{item.bonus || 'No bonus'}</p>
+                              
                               <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A5C82] font-black text-xs">Ks</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">Ks</span>
                                 <input 
                                   type="text" 
                                   inputMode="numeric"
@@ -490,7 +628,7 @@ export default function AdminPanel() {
                                     const value = e.target.value.replace(/[^0-9]/g, '');
                                     handlePriceChange(categoryKey as keyof typeof gamePrices, item.id, value);
                                   }} 
-                                  className="w-full bg-[#E4D5B7] border-2 border-transparent rounded-lg py-2.5 pl-10 pr-3 text-[#4A5C82] text-sm font-black focus:border-[#D99B48] focus:outline-none transition-all" 
+                                  className="w-full bg-white border border-gray-200 rounded-lg py-2 pl-10 pr-3 text-gray-800 text-sm font-black focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all shadow-sm" 
                                 />
                               </div>
                             </div>
@@ -503,7 +641,7 @@ export default function AdminPanel() {
               </div>
             </div>
           )}
-          
+
         </div>
       </div>
     </main>
