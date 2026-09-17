@@ -93,8 +93,6 @@ export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  
-  // Update tabs to match the sidebar design (Dashboard added)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'wallet' | 'mapping'>('dashboard'); 
   
   const [orders, setOrders] = useState<any[]>([]);
@@ -104,12 +102,17 @@ export default function AdminPanel() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Mock data for Dashboard stats (In a real app, this would come from Supabase)
+  // REAL DATA FOR DASHBOARD
   const [stats, setStats] = useState({
-    activeUsers: 142,
-    totalSales: '8,450,000',
+    todaySales: 0,
+    monthSales: 0,
+    totalSales: 0,
     pendingOrders: 0,
-    totalUsers: 1250
+    totalWalletAmount: 0,
+    topGame: 'N/A',
+    completionRate: 0,
+    doneOrdersCount: 0,
+    totalOrdersCount: 0
   });
 
   const fetchRealPrices = async () => {
@@ -135,9 +138,61 @@ export default function AdminPanel() {
       const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
       if (data) {
         setOrders(data);
-        // Update pending orders count for dashboard
-        const pendingCount = data.filter(order => order.status === 'pending').length;
-        setStats(prev => ({ ...prev, pendingOrders: pendingCount }));
+        
+        // --- REAL ANALYTICS CALCULATIONS ---
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+        
+        let tSales = 0;
+        let mSales = 0;
+        let allSales = 0;
+        let pCount = 0;
+        let dCount = 0;
+        const gameCounts: Record<string, number> = {};
+
+        data.forEach(order => {
+          const orderDate = new Date(order.created_at).getTime();
+          
+          if (order.status === 'pending') {
+            pCount++;
+          } else if (order.status === 'done') {
+            dCount++;
+            const price = Number(order.price) || 0;
+            allSales += price;
+            
+            // Calculate Today & Month Sales
+            if (orderDate >= startOfToday) tSales += price;
+            if (orderDate >= startOfMonth) mSales += price;
+            
+            // Find best selling game
+            const gameName = order.game_name || 'Unknown';
+            gameCounts[gameName] = (gameCounts[gameName] || 0) + 1;
+          }
+        });
+
+        let popularGame = "N/A";
+        let maxSells = 0;
+        Object.entries(gameCounts).forEach(([name, count]) => {
+          if (count > maxSells) {
+            maxSells = count;
+            popularGame = name;
+          }
+        });
+
+        const rate = data.length > 0 ? Math.round((dCount / data.length) * 100) : 0;
+
+        setStats(prev => ({ 
+          ...prev, 
+          todaySales: tSales,
+          monthSales: mSales,
+          totalSales: allSales,
+          pendingOrders: pCount,
+          topGame: popularGame,
+          completionRate: rate,
+          doneOrdersCount: dCount,
+          totalOrdersCount: data.length
+        }));
       }
     } catch (err) {
       console.log("Order Fetch Error:", err);
@@ -147,7 +202,17 @@ export default function AdminPanel() {
   const fetchWalletTopups = async () => {
     try {
       const { data, error } = await supabase.from('wallet_history').select('*').order('created_at', { ascending: false });
-      if (data) setWalletTopups(data);
+      if (data) {
+        setWalletTopups(data);
+        const totalWallet = data
+          .filter(topup => topup.status === 'done')
+          .reduce((sum, topup) => sum + (Number(topup.amount) || 0), 0);
+          
+        setStats(prev => ({
+          ...prev,
+          totalWalletAmount: totalWallet
+        }));
+      }
     } catch (err) {
       console.log("Wallet Fetch Error:", err);
     }
@@ -261,21 +326,17 @@ export default function AdminPanel() {
       <main className="min-h-screen flex items-center justify-center p-4 bg-[#f0f2f5] font-sans">
         <div className="w-full max-w-4xl bg-white rounded-[30px] shadow-2xl flex overflow-hidden min-h-[500px]">
           
-          {/* LEFT: Login Form */}
           <div className="w-full md:w-1/2 p-12 flex flex-col justify-center bg-white relative">
             <div className="max-w-xs mx-auto w-full">
-              
               <div className="mb-8 flex justify-center">
                 <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-md">
                   <img src="/painggyi-logo.jpg" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-[#f3f4f6] flex items-center justify-center"><span class="text-3xl">🎮</span></div>'; }} />
                 </div>
               </div>
-
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-black text-gray-800 mb-1">Welcome Back</h1>
                 <p className="text-gray-500 text-xs font-medium">Please enter your admin details.</p>
               </div>
-
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="relative">
                   <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} className="w-full rounded-xl py-3 pl-10 pr-4 text-gray-800 font-bold bg-[#f8fafc] border border-gray-100 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 text-sm" />
@@ -283,29 +344,24 @@ export default function AdminPanel() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                   </div>
                 </div>
-
                 <div className="relative">
                   <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full rounded-xl py-3 pl-10 pr-10 text-gray-800 font-bold bg-[#f8fafc] border border-gray-100 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 text-sm" />
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                   </div>
                 </div>
-
                 <button type="submit" className="w-full font-bold text-white py-3 mt-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 transition-all shadow-lg text-sm">
                   Log In
                 </button>
               </form>
             </div>
           </div>
-
-          {/* RIGHT: Image / Branding */}
           <div className="w-full md:w-1/2 bg-indigo-900 relative hidden md:block">
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <h2 className="text-3xl font-black tracking-widest text-white mb-2">PAING GYI</h2>
               <h3 className="text-lg font-bold text-indigo-300">ADMIN PORTAL</h3>
             </div>
           </div>
-          
         </div>
       </main>
     );
@@ -317,8 +373,6 @@ export default function AdminPanel() {
       
       {/* SIDEBAR */}
       <div className="w-64 bg-indigo-700 text-white flex flex-col m-4 rounded-[30px] shadow-xl overflow-hidden relative z-20">
-        
-        {/* Logo Area */}
         <div className="p-8 flex items-center justify-center border-b border-indigo-600/50">
           <div className="flex flex-col items-center">
             <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-3 shadow-md overflow-hidden">
@@ -329,47 +383,31 @@ export default function AdminPanel() {
           </div>
         </div>
 
-        {/* Navigation Links */}
         <div className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          <button 
-            onClick={() => setActiveTab('dashboard')} 
-            className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'dashboard' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}
-          >
+          <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'dashboard' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
             Dashboard
           </button>
           
-          <button 
-            onClick={() => setActiveTab('orders')} 
-            className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'orders' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}
-          >
+          <button onClick={() => setActiveTab('orders')} className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'orders' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
             <div className="flex items-center gap-3">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
               Orders
             </div>
-            {stats.pendingOrders > 0 && (
-              <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{stats.pendingOrders}</span>
-            )}
+            {stats.pendingOrders > 0 && <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{stats.pendingOrders}</span>}
           </button>
 
-          <button 
-            onClick={() => setActiveTab('wallet')} 
-            className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'wallet' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}
-          >
+          <button onClick={() => setActiveTab('wallet')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'wallet' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
             Wallet Topups
           </button>
 
-          <button 
-            onClick={() => setActiveTab('mapping')} 
-            className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'mapping' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}
-          >
+          <button onClick={() => setActiveTab('mapping')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'mapping' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
             Edit Prices
           </button>
         </div>
 
-        {/* User Info / Logout Area at Bottom */}
         <div className="p-4 mt-auto">
           <button onClick={() => setIsLoggedIn(false)} className="w-full flex items-center gap-3 px-5 py-3 bg-indigo-800 hover:bg-indigo-900 rounded-2xl text-sm font-bold transition-colors">
              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
@@ -386,7 +424,6 @@ export default function AdminPanel() {
            <h2 className="text-2xl font-black text-gray-800 capitalize tracking-tight">
              {activeTab === 'mapping' ? 'Edit Game Prices' : activeTab}
            </h2>
-           
            <div className="flex items-center gap-4">
               <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-indigo-600 transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
@@ -404,29 +441,32 @@ export default function AdminPanel() {
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               
-              {/* Stats Cards Row */}
+              {/* Stats Cards Row (Real Data) */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                {/* 1. Today's Sales */}
                 <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-[24px] shadow-lg text-white">
                   <div className="flex justify-between items-start mb-4">
                     <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
-                    <span className="bg-white/20 px-2 py-1 rounded-lg text-xs font-bold">+12%</span>
                   </div>
-                  <h3 className="text-indigo-100 text-sm font-bold mb-1">Active Users (Live)</h3>
-                  <p className="text-3xl font-black">{stats.activeUsers}</p>
+                  <h3 className="text-indigo-100 text-sm font-bold mb-1">Today's Sales</h3>
+                  <p className="text-3xl font-black">{stats.todaySales.toLocaleString()} <span className="text-sm font-medium">Ks</span></p>
                 </div>
 
+                {/* 2. This Month's Sales */}
                 <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
                   <div className="flex justify-between items-start mb-4">
-                    <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     </div>
                   </div>
-                  <h3 className="text-gray-400 text-sm font-bold mb-1">Total Sales</h3>
-                  <p className="text-3xl font-black text-gray-800">{stats.totalSales} <span className="text-sm text-gray-400">Ks</span></p>
+                  <h3 className="text-gray-400 text-sm font-bold mb-1">This Month</h3>
+                  <p className="text-3xl font-black text-gray-800">{stats.monthSales.toLocaleString()} <span className="text-sm text-gray-400 font-medium">Ks</span></p>
                 </div>
 
+                {/* 3. Pending Orders */}
                 <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full -mr-10 -mt-10 z-0"></div>
                   <div className="relative z-10">
@@ -440,28 +480,57 @@ export default function AdminPanel() {
                   </div>
                 </div>
 
+                {/* 4. Total Wallet Topups */}
                 <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
                   <div className="flex justify-between items-start mb-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                     </div>
                   </div>
-                  <h3 className="text-gray-400 text-sm font-bold mb-1">Total Users</h3>
-                  <p className="text-3xl font-black text-gray-800">{stats.totalUsers}</p>
+                  <h3 className="text-gray-400 text-sm font-bold mb-1">Wallet Topups</h3>
+                  <p className="text-3xl font-black text-gray-800">{stats.totalWalletAmount.toLocaleString()} <span className="text-sm text-gray-400 font-medium">Ks</span></p>
                 </div>
               </div>
+              
+              {/* Detailed Business Analytics (Real Functional Data) */}
+              <div className="bg-white rounded-[30px] p-8 shadow-sm border border-gray-100">
+                <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                  Business Analytics
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  
+                  {/* Order Completion Rate (Progress Bar) */}
+                  <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col justify-center">
+                    <h4 className="text-sm font-bold text-gray-500 mb-2 uppercase tracking-wider">Order Completion Rate</h4>
+                    <div className="flex items-end gap-2 mb-2">
+                       <span className="text-4xl font-black text-indigo-600">{stats.completionRate}%</span>
+                       <span className="text-xs font-bold text-gray-400 mb-1">of total orders</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2 overflow-hidden">
+                      <div className="bg-indigo-600 h-2.5 rounded-full transition-all duration-1000" style={{ width: `${stats.completionRate}%` }}></div>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-3 font-medium">Done: {stats.doneOrdersCount} / Total: {stats.totalOrdersCount}</p>
+                  </div>
 
-              {/* Big Chart Area (Placeholder for UI) */}
-              <div className="bg-white rounded-[30px] p-8 shadow-sm border border-gray-100 min-h-[300px] flex flex-col justify-center items-center relative overflow-hidden">
-                 <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                 <div className="text-center z-10">
-                   <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                     <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
-                   </div>
-                   <h3 className="text-lg font-bold text-gray-800 mb-2">Detailed Analytics Coming Soon</h3>
-                   <p className="text-gray-500 text-sm max-w-sm">Connect with Google Analytics or Vercel Analytics to see live traffic, visitor maps, and conversion rates here.</p>
-                   <button className="mt-6 px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-md hover:bg-indigo-700">Setup Analytics</button>
-                 </div>
+                  {/* Best Selling Game */}
+                  <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col justify-center items-center text-center">
+                    <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                    </div>
+                    <h4 className="text-sm font-bold text-gray-500 mb-1 uppercase tracking-wider">Top Selling Game</h4>
+                    <p className="text-2xl font-black text-gray-800 capitalize">{stats.topGame}</p>
+                  </div>
+
+                  {/* All-Time Total Sales */}
+                  <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col justify-center">
+                    <h4 className="text-sm font-bold text-gray-500 mb-2 uppercase tracking-wider">All-Time Revenue</h4>
+                    <p className="text-3xl font-black text-green-600 mb-1">{stats.totalSales.toLocaleString()} <span className="text-sm font-medium">Ks</span></p>
+                    <p className="text-xs text-gray-400 font-medium mt-2">Total gross revenue from all completed game orders.</p>
+                  </div>
+
+                </div>
               </div>
 
             </div>
