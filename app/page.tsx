@@ -93,7 +93,7 @@ export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'wallet' | 'mapping'>('dashboard'); 
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'wallet' | 'mapping' | 'announcements'>('dashboard'); 
   
   const [orders, setOrders] = useState<any[]>([]);
   const [walletTopups, setWalletTopups] = useState<any[]>([]);
@@ -101,6 +101,12 @@ export default function AdminPanel() {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Announcement States
+  const [annTitle, setAnnTitle] = useState('');
+  const [annMessage, setAnnMessage] = useState('');
+  const [annType, setAnnType] = useState('promo');
+  const [isSendingAnn, setIsSendingAnn] = useState(false);
 
   // REAL DATA FOR DASHBOARD
   const [stats, setStats] = useState({
@@ -309,6 +315,30 @@ export default function AdminPanel() {
     }));
   };
 
+  // Broadcast Function
+  const handleSendAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!annTitle || !annMessage) {
+      alert("ခေါင်းစဉ်နှင့် စာသား ထည့်ပါ။");
+      return;
+    }
+    setIsSendingAnn(true);
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .insert([{ title: annTitle, message: annMessage, type: annType }]);
+      
+      if (error) throw error;
+      alert("✅ ကြေငြာချက်ကို Inbox ထဲသို့ အောင်မြင်စွာ ပေးပို့ပြီးပါပြီ!");
+      setAnnTitle('');
+      setAnnMessage('');
+    } catch (err: any) {
+      alert("Error sending announcement: " + err.message);
+    } finally {
+      setIsSendingAnn(false);
+    }
+  };
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (username === 'admin' && password === 'painggyi123') setIsLoggedIn(true);
@@ -406,6 +436,11 @@ export default function AdminPanel() {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
             Edit Prices
           </button>
+
+          <button onClick={() => setActiveTab('announcements')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'announcements' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+            Broadcast
+          </button>
         </div>
 
         <div className="p-4 mt-auto">
@@ -422,7 +457,7 @@ export default function AdminPanel() {
         {/* Top Header */}
         <div className="h-20 flex items-center justify-between px-8 bg-transparent">
            <h2 className="text-2xl font-black text-gray-800 capitalize tracking-tight">
-             {activeTab === 'mapping' ? 'Edit Game Prices' : activeTab}
+             {activeTab === 'mapping' ? 'Edit Game Prices' : activeTab === 'announcements' ? 'Broadcast Message' : activeTab}
            </h2>
            <div className="flex items-center gap-4">
               <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-indigo-600 transition-colors">
@@ -707,6 +742,77 @@ export default function AdminPanel() {
                     )}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* ================= 🌟 TAB 5: BROADCAST / ANNOUNCEMENTS 🌟 ================= */}
+          {activeTab === 'announcements' && (
+            <div className="bg-white rounded-[30px] p-6 md:p-8 shadow-sm border border-gray-100 min-h-full">
+              <div className="max-w-2xl mx-auto mt-4">
+                <div className="text-center mb-8">
+                  <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+                  </div>
+                  <h3 className="text-2xl font-black text-gray-800 mb-2">Send Broadcast Message</h3>
+                  <p className="text-gray-500 text-sm">Send a notification directly to all users' inboxes.</p>
+                </div>
+
+                <form onSubmit={handleSendAnnouncement} className="space-y-5 bg-gray-50 p-6 md:p-8 rounded-3xl border border-gray-100">
+                  
+                  {/* Title Input */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Message Title</label>
+                    <input 
+                      type="text" 
+                      value={annTitle}
+                      onChange={(e) => setAnnTitle(e.target.value)}
+                      placeholder="E.g., Weekend Special Promo! 🔥"
+                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all shadow-sm"
+                      required
+                    />
+                  </div>
+
+                  {/* Type Selector */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Message Type</label>
+                    <div className="flex gap-4">
+                      <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${annType === 'promo' ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm' : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}>
+                        <input type="radio" name="type" value="promo" checked={annType === 'promo'} onChange={() => setAnnType('promo')} className="hidden" />
+                        <span className="text-lg">🎁</span>
+                        <span className="font-bold text-sm">Promotion</span>
+                      </label>
+                      <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${annType === 'system' ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm' : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}>
+                        <input type="radio" name="type" value="system" checked={annType === 'system'} onChange={() => setAnnType('system')} className="hidden" />
+                        <span className="text-lg">ℹ️</span>
+                        <span className="font-bold text-sm">System Update</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Message Body Input */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Detailed Message</label>
+                    <textarea 
+                      value={annMessage}
+                      onChange={(e) => setAnnMessage(e.target.value)}
+                      placeholder="Write the full details of your announcement here..."
+                      rows={5}
+                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all shadow-sm resize-none"
+                      required
+                    ></textarea>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={isSendingAnn}
+                    className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 ${isSendingAnn ? 'bg-indigo-400 text-white cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-500/30 hover:-translate-y-0.5'}`}
+                  >
+                    {isSendingAnn ? 'Sending...' : 'Send Broadcast Now'}
+                    {!isSendingAnn && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>}
+                  </button>
+
+                </form>
               </div>
             </div>
           )}
