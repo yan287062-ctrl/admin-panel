@@ -90,16 +90,15 @@ const initialGamePrices = {
 };
 
 const getGameLogo = (gameName: string) => {
-  const name = gameName.toLowerCase();
-  if (name.includes('mobile legends') || name.includes('mlbb')) return '/mlbb.jpg';
-  if (name.includes('magic chess') || name.includes('mcgg')) return '/mcgg.jpg';
+  const name = gameName?.toLowerCase() || '';
+  if (name.includes('mobile legends') || name.includes('mlbb') || name.includes('mob')) return '/mlbb.jpg';
+  if (name.includes('magic chess') || name.includes('mcgg') || name.includes('mag')) return '/mcgg.jpg';
   if (name.includes('pubg') || name.includes('uc')) return '/pubg.jpg';
-  if (name.includes('telegram')) return '/telegram.jpg';
+  if (name.includes('telegram') || name.includes('tel')) return '/telegram.jpg';
   if (name.includes('heartopia')) return '/heartopia.jpg';
-  if (name.includes('smile') || name.includes('brl')) return '/smilecoin.jpg';
+  if (name.includes('smile') || name.includes('brl') || name.includes('smi')) return '/smilecoin.jpg';
   return '/default-game.jpg';
 };
-
 export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
