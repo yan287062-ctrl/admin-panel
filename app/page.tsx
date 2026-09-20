@@ -377,7 +377,7 @@ export default function AdminPanel() {
             <div className="max-w-xs mx-auto w-full">
               <div className="mb-8 flex justify-center">
                 <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-md">
-                  <img src="/painggyi-logo.png" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-[#f3f4f6] flex items-center justify-center"><span class="text-3xl">🎮</span></div>'; }} />
+                  <img src="/painggyi-logo.jpg" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-[#f3f4f6] flex items-center justify-center"><span class="text-3xl">🎮</span></div>'; }} />
                 </div>
               </div>
               <div className="text-center mb-8">
@@ -422,7 +422,7 @@ export default function AdminPanel() {
         <div className="p-8 flex items-center justify-center border-b border-indigo-600/50">
           <div className="flex flex-col items-center">
             <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-3 shadow-md overflow-hidden">
-               <img src="/painggyi-logo.png" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="text-2xl">🎮</span>'; }} />
+               <img src="/painggyi-logo.jpg" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="text-2xl">🎮</span>'; }} />
             </div>
             <h1 className="font-black text-sm tracking-widest uppercase">Paing Gyi</h1>
             <p className="text-indigo-300 text-[10px] font-bold tracking-widest uppercase">Admin</p>
