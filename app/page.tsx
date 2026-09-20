@@ -89,16 +89,18 @@ const initialGamePrices = {
   ].map(pkg => ({ ...pkg, bonus: 'No bonus' }))
 };
 
+// ပြောင်းထားတဲ့ .png လင့်ခ်များ
 const getGameLogo = (gameName: string) => {
   const name = gameName?.toLowerCase() || '';
-  if (name.includes('mobile legends') || name.includes('mlbb') || name.includes('mob')) return '/mlbb.jpg';
-  if (name.includes('magic chess') || name.includes('mcgg') || name.includes('mag')) return '/mcgg.jpg';
-  if (name.includes('pubg') || name.includes('uc')) return '/pubg.jpg';
-  if (name.includes('telegram') || name.includes('tel')) return '/telegram.jpg';
-  if (name.includes('heartopia')) return '/heartopia.jpg';
-  if (name.includes('smile') || name.includes('brl') || name.includes('smi')) return '/smilecoin.jpg';
-  return '/default-game.jpg';
+  if (name.includes('mobile legends') || name.includes('mlbb') || name.includes('mob')) return '/mlbb.png';
+  if (name.includes('magic chess') || name.includes('mcgg') || name.includes('mag')) return '/mcgg.png';
+  if (name.includes('pubg') || name.includes('uc')) return '/pubg.png';
+  if (name.includes('telegram') || name.includes('tel')) return '/telegram.png';
+  if (name.includes('heartopia')) return '/heartopia.png';
+  if (name.includes('smile') || name.includes('brl') || name.includes('smi')) return '/smilecoin.png';
+  return '/default-game.png';
 };
+
 export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
@@ -375,7 +377,7 @@ export default function AdminPanel() {
             <div className="max-w-xs mx-auto w-full">
               <div className="mb-8 flex justify-center">
                 <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-md">
-                  <img src="/painggyi-logo.jpg" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-[#f3f4f6] flex items-center justify-center"><span class="text-3xl">🎮</span></div>'; }} />
+                  <img src="/painggyi-logo.png" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-[#f3f4f6] flex items-center justify-center"><span class="text-3xl">🎮</span></div>'; }} />
                 </div>
               </div>
               <div className="text-center mb-8">
@@ -420,7 +422,7 @@ export default function AdminPanel() {
         <div className="p-8 flex items-center justify-center border-b border-indigo-600/50">
           <div className="flex flex-col items-center">
             <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-3 shadow-md overflow-hidden">
-               <img src="/painggyi-logo.jpg" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="text-2xl">🎮</span>'; }} />
+               <img src="/painggyi-logo.png" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="text-2xl">🎮</span>'; }} />
             </div>
             <h1 className="font-black text-sm tracking-widest uppercase">Paing Gyi</h1>
             <p className="text-indigo-300 text-[10px] font-bold tracking-widest uppercase">Admin</p>
@@ -429,7 +431,7 @@ export default function AdminPanel() {
 
         <div className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
           <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'dashboard' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2z"></path></svg>
             Dashboard
           </button>
           
@@ -594,15 +596,23 @@ export default function AdminPanel() {
                     
                     <div className="flex items-center gap-4 mb-4 md:mb-0">
                       <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
-                        <img 
-                          src={getGameLogo(order.game_name)} 
-                          alt={order.game_name} 
-                          className="w-full h-full object-cover" 
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.parentElement!.innerHTML = `<span class="text-indigo-600 font-black text-xs uppercase">${order.game_name.substring(0, 3)}</span>`;
-                          }} 
-                        />
+                        {(() => {
+                          const logoSrc = getGameLogo(order.game_name);
+                          if (logoSrc === '/default-game.png') {
+                            return <span className="text-indigo-600 font-black text-xs uppercase">{(order.game_name || 'UNK').substring(0, 3)}</span>;
+                          }
+                          return (
+                            <img 
+                              src={logoSrc} 
+                              alt={order.game_name} 
+                              className="w-full h-full object-cover" 
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.parentElement!.innerHTML = `<span class="text-indigo-600 font-black text-xs uppercase">${(order.game_name || 'UNK').substring(0, 3)}</span>`;
+                              }} 
+                            />
+                          );
+                        })()}
                       </div>
 
                       <div className="truncate pr-4">
