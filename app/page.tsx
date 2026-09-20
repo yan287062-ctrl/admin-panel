@@ -89,26 +89,36 @@ const initialGamePrices = {
   ].map(pkg => ({ ...pkg, bonus: 'No bonus' }))
 };
 
+const getGameLogo = (gameName: string) => {
+  const name = gameName.toLowerCase();
+  if (name.includes('mobile legends') || name.includes('mlbb')) return '/mlbb.jpg';
+  if (name.includes('magic chess') || name.includes('mcgg')) return '/mcgg.jpg';
+  if (name.includes('pubg') || name.includes('uc')) return '/pubg.jpg';
+  if (name.includes('telegram')) return '/telegram.jpg';
+  if (name.includes('heartopia')) return '/heartopia.jpg';
+  if (name.includes('smile') || name.includes('brl')) return '/smilecoin.jpg';
+  return '/default-game.jpg';
+};
+
 export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'wallet' | 'mapping' | 'announcements'>('dashboard'); 
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'wallet' | 'users' | 'mapping' | 'announcements'>('dashboard'); 
   
   const [orders, setOrders] = useState<any[]>([]);
   const [walletTopups, setWalletTopups] = useState<any[]>([]);
+  const [usersList, setUsersList] = useState<any[]>([]);
   const [gamePrices, setGamePrices] = useState(initialGamePrices);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Announcement States
   const [annTitle, setAnnTitle] = useState('');
   const [annMessage, setAnnMessage] = useState('');
   const [annType, setAnnType] = useState('promo');
   const [isSendingAnn, setIsSendingAnn] = useState(false);
 
-  // REAL DATA FOR DASHBOARD
   const [stats, setStats] = useState({
     todaySales: 0,
     monthSales: 0,
@@ -145,7 +155,6 @@ export default function AdminPanel() {
       if (data) {
         setOrders(data);
         
-        // --- REAL ANALYTICS CALCULATIONS ---
         const now = new Date();
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
@@ -167,11 +176,9 @@ export default function AdminPanel() {
             const price = Number(order.price) || 0;
             allSales += price;
             
-            // Calculate Today & Month Sales
             if (orderDate >= startOfToday) tSales += price;
             if (orderDate >= startOfMonth) mSales += price;
             
-            // Find best selling game
             const gameName = order.game_name || 'Unknown';
             gameCounts[gameName] = (gameCounts[gameName] || 0) + 1;
           }
@@ -224,11 +231,23 @@ export default function AdminPanel() {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase.from('users_wallet').select('*').order('balance', { ascending: false });
+      if (data) {
+        setUsersList(data);
+      }
+    } catch (err) {
+      console.log("Users Fetch Error:", err);
+    }
+  };
+
   useEffect(() => {
     if (isLoggedIn) {
       fetchOrders();
       fetchWalletTopups();
       fetchRealPrices();
+      fetchUsers();
     }
   }, [isLoggedIn]);
 
@@ -315,7 +334,6 @@ export default function AdminPanel() {
     }));
   };
 
-  // Broadcast Function
   const handleSendAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!annTitle || !annMessage) {
@@ -350,12 +368,10 @@ export default function AdminPanel() {
     ucPack: 'UC Packs', telegram: 'Telegram Premium', heartopia: 'Heartopia', smileCoin: 'Smile Coin'
   };
 
-  // ==================== LOGIN SCREEN ====================
   if (!isLoggedIn) {
     return (
       <main className="min-h-screen flex items-center justify-center p-4 bg-[#f0f2f5] font-sans">
         <div className="w-full max-w-4xl bg-white rounded-[30px] shadow-2xl flex overflow-hidden min-h-[500px]">
-          
           <div className="w-full md:w-1/2 p-12 flex flex-col justify-center bg-white relative">
             <div className="max-w-xs mx-auto w-full">
               <div className="mb-8 flex justify-center">
@@ -397,7 +413,6 @@ export default function AdminPanel() {
     );
   }
 
-  // ==================== ADMIN DASHBOARD (SIDEBAR DESIGN) ====================
   return (
     <main className="min-h-screen bg-[#f3f4f6] font-sans flex h-screen overflow-hidden">
       
@@ -430,6 +445,14 @@ export default function AdminPanel() {
           <button onClick={() => setActiveTab('wallet')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'wallet' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
             Wallet Topups
+          </button>
+
+          <button onClick={() => setActiveTab('users')} className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'users' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+              Users
+            </div>
+            <span className="bg-indigo-500/50 text-white text-[10px] px-2 py-0.5 rounded-full">{usersList.length}</span>
           </button>
 
           <button onClick={() => setActiveTab('mapping')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'mapping' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
@@ -476,10 +499,7 @@ export default function AdminPanel() {
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               
-              {/* Stats Cards Row (Real Data) */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                
-                {/* 1. Today's Sales */}
                 <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-[24px] shadow-lg text-white">
                   <div className="flex justify-between items-start mb-4">
                     <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
@@ -490,7 +510,6 @@ export default function AdminPanel() {
                   <p className="text-3xl font-black">{stats.todaySales.toLocaleString()} <span className="text-sm font-medium">Ks</span></p>
                 </div>
 
-                {/* 2. This Month's Sales */}
                 <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
                   <div className="flex justify-between items-start mb-4">
                     <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -501,7 +520,6 @@ export default function AdminPanel() {
                   <p className="text-3xl font-black text-gray-800">{stats.monthSales.toLocaleString()} <span className="text-sm text-gray-400 font-medium">Ks</span></p>
                 </div>
 
-                {/* 3. Pending Orders */}
                 <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full -mr-10 -mt-10 z-0"></div>
                   <div className="relative z-10">
@@ -515,7 +533,6 @@ export default function AdminPanel() {
                   </div>
                 </div>
 
-                {/* 4. Total Wallet Topups */}
                 <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
                   <div className="flex justify-between items-start mb-4">
                     <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
@@ -527,7 +544,6 @@ export default function AdminPanel() {
                 </div>
               </div>
               
-              {/* Detailed Business Analytics (Real Functional Data) */}
               <div className="bg-white rounded-[30px] p-8 shadow-sm border border-gray-100">
                 <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
                   <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
@@ -535,8 +551,6 @@ export default function AdminPanel() {
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  
-                  {/* Order Completion Rate (Progress Bar) */}
                   <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col justify-center">
                     <h4 className="text-sm font-bold text-gray-500 mb-2 uppercase tracking-wider">Order Completion Rate</h4>
                     <div className="flex items-end gap-2 mb-2">
@@ -549,7 +563,6 @@ export default function AdminPanel() {
                     <p className="text-xs text-gray-400 mt-3 font-medium">Done: {stats.doneOrdersCount} / Total: {stats.totalOrdersCount}</p>
                   </div>
 
-                  {/* Best Selling Game */}
                   <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col justify-center items-center text-center">
                     <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
                       <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
@@ -558,16 +571,13 @@ export default function AdminPanel() {
                     <p className="text-2xl font-black text-gray-800 capitalize">{stats.topGame}</p>
                   </div>
 
-                  {/* All-Time Total Sales */}
                   <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col justify-center">
                     <h4 className="text-sm font-bold text-gray-500 mb-2 uppercase tracking-wider">All-Time Revenue</h4>
                     <p className="text-3xl font-black text-green-600 mb-1">{stats.totalSales.toLocaleString()} <span className="text-sm font-medium">Ks</span></p>
                     <p className="text-xs text-gray-400 font-medium mt-2">Total gross revenue from all completed game orders.</p>
                   </div>
-
                 </div>
               </div>
-
             </div>
           )}
 
@@ -584,21 +594,32 @@ export default function AdminPanel() {
                   <div key={order.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl border border-gray-100 hover:border-indigo-100 hover:shadow-md transition-all bg-gray-50/50">
                     
                     <div className="flex items-center gap-4 mb-4 md:mb-0">
-                      <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 font-black text-xs uppercase">
-                        {order.game_name.substring(0, 3)}
+                      <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
+                        <img 
+                          src={getGameLogo(order.game_name)} 
+                          alt={order.game_name} 
+                          className="w-full h-full object-cover" 
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.parentElement!.innerHTML = `<span class="text-indigo-600 font-black text-xs uppercase">${order.game_name.substring(0, 3)}</span>`;
+                          }} 
+                        />
                       </div>
-                      <div>
-                        <h4 className="font-bold text-gray-800 text-sm">{order.item_name}</h4>
-                        <p className="text-xs text-gray-500 mt-1 font-medium">ID: {order.player_id} {order.zone_id ? `| Zone: ${order.zone_id}` : ''}</p>
+
+                      <div className="truncate pr-4">
+                        <h4 className="font-bold text-gray-800 text-sm truncate">{order.item_name}</h4>
+                        <p className="text-xs text-gray-500 mt-1 font-medium truncate">
+                          <span className="text-indigo-500 font-bold">{order.user_email || 'Guest User'}</span> &bull; ID: {order.player_id} {order.zone_id ? `| Zone: ${order.zone_id}` : ''}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="flex flex-col md:items-end gap-1 mb-4 md:mb-0">
+                    <div className="flex flex-col md:items-end gap-1 mb-4 md:mb-0 shrink-0">
                       <span className="font-black text-indigo-600">{order.price.toLocaleString()} Ks</span>
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{order.payment_method}</span>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
                        {order.status === 'pending' ? (
                          <span className="px-3 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-lg uppercase">Pending</span>
                        ) : (
@@ -678,7 +699,6 @@ export default function AdminPanel() {
                          🗑️
                        </button>
                     </div>
-
                   </div>
                 ))}
                 {walletTopups.length === 0 && <div className="text-center text-gray-400 font-bold py-10">No wallet requests yet</div>}
@@ -686,10 +706,43 @@ export default function AdminPanel() {
             </div>
           )}
 
-          {/* ================= TAB 4: MAPPING (EDIT PRICES) ================= */}
+          {/* ================= TAB 4: USERS LIST ================= */}
+          {activeTab === 'users' && (
+            <div className="bg-white rounded-[30px] p-6 shadow-sm border border-gray-100 min-h-full">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                   <h3 className="font-bold text-gray-800 text-lg">Registered Users</h3>
+                   <p className="text-xs text-gray-500 mt-1 font-medium">Total: {usersList.length} Accounts</p>
+                </div>
+                <button onClick={fetchUsers} className="text-xs bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold hover:bg-gray-200">🔄 Refresh</button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {usersList.map((user, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 rounded-2xl border border-gray-100 hover:border-indigo-100 hover:shadow-md transition-all bg-gray-50/50">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                      </div>
+                      <div className="truncate">
+                        <h4 className="font-bold text-gray-800 text-sm truncate" title={user.email}>{user.email}</h4>
+                        <p className="text-xs text-gray-500 font-medium">User</p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="block font-black text-indigo-600">{Number(user.balance).toLocaleString()} Ks</span>
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Wallet Balance</span>
+                    </div>
+                  </div>
+                ))}
+                {usersList.length === 0 && <div className="col-span-full text-center text-gray-400 font-bold py-10">No users found</div>}
+              </div>
+            </div>
+          )}
+
+          {/* ================= TAB 5: MAPPING (EDIT PRICES) ================= */}
           {activeTab === 'mapping' && (
             <div className="bg-white rounded-[30px] p-6 md:p-8 shadow-sm border border-gray-100 min-h-full">
-              
               <div className="flex justify-between items-center mb-8">
                 <p className="text-gray-500 text-sm font-medium">Update prices for all games. Changes reflect instantly.</p>
                 <button onClick={handleSavePrices} disabled={isSaving} className={`px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-md ${isSaving ? 'bg-gray-200 text-gray-500' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>
@@ -746,7 +799,7 @@ export default function AdminPanel() {
             </div>
           )}
 
-          {/* ================= 🌟 TAB 5: BROADCAST / ANNOUNCEMENTS 🌟 ================= */}
+          {/* ================= TAB 6: BROADCAST / ANNOUNCEMENTS ================= */}
           {activeTab === 'announcements' && (
             <div className="bg-white rounded-[30px] p-6 md:p-8 shadow-sm border border-gray-100 min-h-full">
               <div className="max-w-2xl mx-auto mt-4">
@@ -759,8 +812,6 @@ export default function AdminPanel() {
                 </div>
 
                 <form onSubmit={handleSendAnnouncement} className="space-y-5 bg-gray-50 p-6 md:p-8 rounded-3xl border border-gray-100">
-                  
-                  {/* Title Input */}
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Message Title</label>
                     <input 
@@ -772,8 +823,6 @@ export default function AdminPanel() {
                       required
                     />
                   </div>
-
-                  {/* Type Selector */}
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Message Type</label>
                     <div className="flex gap-4">
@@ -789,8 +838,6 @@ export default function AdminPanel() {
                       </label>
                     </div>
                   </div>
-
-                  {/* Message Body Input */}
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Detailed Message</label>
                     <textarea 
@@ -802,7 +849,6 @@ export default function AdminPanel() {
                       required
                     ></textarea>
                   </div>
-
                   <button 
                     type="submit" 
                     disabled={isSendingAnn}
@@ -811,7 +857,6 @@ export default function AdminPanel() {
                     {isSendingAnn ? 'Sending...' : 'Send Broadcast Now'}
                     {!isSendingAnn && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>}
                   </button>
-
                 </form>
               </div>
             </div>
@@ -821,4 +866,4 @@ export default function AdminPanel() {
       </div>
     </main>
   );
-}        
+}
