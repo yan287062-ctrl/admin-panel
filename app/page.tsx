@@ -89,7 +89,6 @@ const initialGamePrices = {
   ].map(pkg => ({ ...pkg, bonus: 'No bonus' }))
 };
 
-// ပြောင်းထားတဲ့ .png လင့်ခ်များ
 const getGameLogo = (gameName: string) => {
   const name = gameName?.toLowerCase() || '';
   if (name.includes('mobile legends') || name.includes('mlbb') || name.includes('mob')) return '/mlbb.png';
@@ -115,6 +114,20 @@ export default function AdminPanel() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Search, Filter & Pagination States
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+  const [orderPage, setOrderPage] = useState(1);
+  
+  const [walletSearch, setWalletSearch] = useState('');
+  const [walletStatusFilter, setWalletStatusFilter] = useState('all');
+  const [walletPage, setWalletPage] = useState(1);
+
+  const [userSearch, setUserSearch] = useState('');
+  const [userPage, setUserPage] = useState(1);
+
+  const itemsPerPage = 10;
+
   const [annTitle, setAnnTitle] = useState('');
   const [annMessage, setAnnMessage] = useState('');
   const [annType, setAnnType] = useState('promo');
@@ -134,7 +147,7 @@ export default function AdminPanel() {
 
   const fetchRealPrices = async () => {
     try {
-      const { data, error } = await supabase.from('game_prices').select('*');
+      const { data } = await supabase.from('game_prices').select('*');
       if (data && data.length > 0) {
         const updatedPrices = JSON.parse(JSON.stringify(initialGamePrices));
         data.forEach((dbItem: any) => {
@@ -152,61 +165,37 @@ export default function AdminPanel() {
 
   const fetchOrders = async () => {
     try {
-      const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+      const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
       if (data) {
         setOrders(data);
-        
         const now = new Date();
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
         
-        let tSales = 0;
-        let mSales = 0;
-        let allSales = 0;
-        let pCount = 0;
-        let dCount = 0;
+        let tSales = 0, mSales = 0, allSales = 0, pCount = 0, dCount = 0;
         const gameCounts: Record<string, number> = {};
 
         data.forEach(order => {
           const orderDate = new Date(order.created_at).getTime();
-          
-          if (order.status === 'pending') {
-            pCount++;
-          } else if (order.status === 'done') {
+          if (order.status === 'pending') pCount++;
+          else if (order.status === 'done') {
             dCount++;
             const price = Number(order.price) || 0;
             allSales += price;
-            
             if (orderDate >= startOfToday) tSales += price;
             if (orderDate >= startOfMonth) mSales += price;
-            
             const gameName = order.game_name || 'Unknown';
             gameCounts[gameName] = (gameCounts[gameName] || 0) + 1;
           }
         });
 
-        let popularGame = "N/A";
-        let maxSells = 0;
+        let popularGame = "N/A", maxSells = 0;
         Object.entries(gameCounts).forEach(([name, count]) => {
-          if (count > maxSells) {
-            maxSells = count;
-            popularGame = name;
-          }
+          if (count > maxSells) { maxSells = count; popularGame = name; }
         });
 
         const rate = data.length > 0 ? Math.round((dCount / data.length) * 100) : 0;
-
-        setStats(prev => ({ 
-          ...prev, 
-          todaySales: tSales,
-          monthSales: mSales,
-          totalSales: allSales,
-          pendingOrders: pCount,
-          topGame: popularGame,
-          completionRate: rate,
-          doneOrdersCount: dCount,
-          totalOrdersCount: data.length
-        }));
+        setStats(prev => ({ ...prev, todaySales: tSales, monthSales: mSales, totalSales: allSales, pendingOrders: pCount, topGame: popularGame, completionRate: rate, doneOrdersCount: dCount, totalOrdersCount: data.length }));
       }
     } catch (err) {
       console.log("Order Fetch Error:", err);
@@ -215,17 +204,11 @@ export default function AdminPanel() {
 
   const fetchWalletTopups = async () => {
     try {
-      const { data, error } = await supabase.from('wallet_history').select('*').order('created_at', { ascending: false });
+      const { data } = await supabase.from('wallet_history').select('*').order('created_at', { ascending: false });
       if (data) {
         setWalletTopups(data);
-        const totalWallet = data
-          .filter(topup => topup.status === 'done')
-          .reduce((sum, topup) => sum + (Number(topup.amount) || 0), 0);
-          
-        setStats(prev => ({
-          ...prev,
-          totalWalletAmount: totalWallet
-        }));
+        const totalWallet = data.filter(topup => topup.status === 'done').reduce((sum, topup) => sum + (Number(topup.amount) || 0), 0);
+        setStats(prev => ({ ...prev, totalWalletAmount: totalWallet }));
       }
     } catch (err) {
       console.log("Wallet Fetch Error:", err);
@@ -234,10 +217,8 @@ export default function AdminPanel() {
 
   const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase.from('users_wallet').select('*').order('balance', { ascending: false });
-      if (data) {
-        setUsersList(data);
-      }
+      const { data } = await supabase.from('users_wallet').select('*').order('balance', { ascending: false });
+      if (data) setUsersList(data);
     } catch (err) {
       console.log("Users Fetch Error:", err);
     }
@@ -245,13 +226,11 @@ export default function AdminPanel() {
 
   useEffect(() => {
     if (isLoggedIn) {
-      fetchOrders();
-      fetchWalletTopups();
-      fetchRealPrices();
-      fetchUsers();
+      fetchOrders(); fetchWalletTopups(); fetchRealPrices(); fetchUsers();
     }
   }, [isLoggedIn]);
 
+  // Actions
   const markAsDone = async (id: string) => {
     await supabase.from('orders').update({ status: 'done' }).eq('id', id);
     fetchOrders();
@@ -264,16 +243,36 @@ export default function AdminPanel() {
     }
   };
 
+  // 1-Click Refund System
+  const refundOrder = async (order: any) => {
+    if (!order.user_email) {
+      alert("ဒီအော်ဒါက Email မပါတဲ့အတွက် Wallet ထဲ ငွေပြန်အမ်းလို့ မရပါ။");
+      return;
+    }
+    if (window.confirm(`အော်ဒါကို Cancel လုပ်ပြီး ${order.user_email} ရဲ့ Wallet သို့ ငွေ ${order.price} Ks ပြန်အမ်းမည်မှာ သေချာပါသလား?`)) {
+      try {
+        await supabase.from('orders').update({ status: 'refunded' }).eq('id', order.id);
+        const { data: walletData } = await supabase.from('users_wallet').select('balance').eq('email', order.user_email).single();
+        let newBalance = Number(order.price) || 0;
+        if (walletData) {
+          newBalance += Number(walletData.balance);
+          await supabase.from('users_wallet').update({ balance: newBalance }).eq('email', order.user_email);
+        } else {
+          await supabase.from('users_wallet').insert([{ email: order.user_email, balance: newBalance }]);
+        }
+        alert("✅ ငွေပြန်အမ်းခြင်း (Refund) အောင်မြင်ပါသည်!");
+        fetchOrders();
+        fetchUsers();
+      } catch (err: any) {
+        alert("Error refunding: " + err.message);
+      }
+    }
+  };
+
   const approveWalletTopup = async (id: string, email: string, amount: number) => {
     if (!window.confirm(`Email အကောင့် ${email} သို့ ငွေ ${amount} Ks ဖြည့်သွင်းပေးမည်မှာ သေချာပါသလား?`)) return;
-    
     try {
-      const { data: walletData, error: walletError } = await supabase
-        .from('users_wallet')
-        .select('balance')
-        .eq('email', email)
-        .single();
-      
+      const { data: walletData } = await supabase.from('users_wallet').select('balance').eq('email', email).single();
       let newBalance = amount;
       if (walletData) {
         newBalance += walletData.balance;
@@ -281,9 +280,9 @@ export default function AdminPanel() {
       } else {
         await supabase.from('users_wallet').insert([{ email: email, balance: newBalance }]);
       }
-      
       await supabase.from('wallet_history').update({ status: 'done' }).eq('id', id);
       fetchWalletTopups();
+      fetchUsers();
       alert("✅ Wallet သို့ ငွေဖြည့်သွင်းခြင်း အောင်မြင်ပါသည်!");
     } catch (err: any) {
       alert("Error approving wallet: " + err.message);
@@ -297,65 +296,77 @@ export default function AdminPanel() {
     }
   };
 
+  // CSV Export Logic
+  const downloadCSV = (data: any[], filename: string) => {
+    if (data.length === 0) return alert("ထုတ်ယူစရာ ဒေတာမရှိပါ။");
+    const headers = Object.keys(data[0]).join(',');
+    const rows = data.map(obj => Object.values(obj).map(val => `"${val}"`).join(',')).join('\n');
+    const blob = new Blob([headers + '\n' + rows], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+  };
+
+  // ----------------------------------------------------
+  // FILTERING & PAGINATION LOGIC 
+  // ----------------------------------------------------
+  const filteredOrders = orders.filter(o => {
+    const matchSearch = (o.user_email || '').toLowerCase().includes(orderSearch.toLowerCase()) || 
+                        (o.player_id || '').toLowerCase().includes(orderSearch.toLowerCase()) ||
+                        (o.item_name || '').toLowerCase().includes(orderSearch.toLowerCase());
+    const matchStatus = orderStatusFilter === 'all' || o.status === orderStatusFilter;
+    return matchSearch && matchStatus;
+  });
+  const paginatedOrders = filteredOrders.slice((orderPage - 1) * itemsPerPage, orderPage * itemsPerPage);
+  const totalOrderPages = Math.ceil(filteredOrders.length / itemsPerPage);
+
+  const filteredWalletTopups = walletTopups.filter(w => {
+    const matchSearch = (w.email || '').toLowerCase().includes(walletSearch.toLowerCase());
+    const matchStatus = walletStatusFilter === 'all' || w.status === walletStatusFilter;
+    return matchSearch && matchStatus;
+  });
+  const paginatedWallet = filteredWalletTopups.slice((walletPage - 1) * itemsPerPage, walletPage * itemsPerPage);
+  const totalWalletPages = Math.ceil(filteredWalletTopups.length / itemsPerPage);
+
+  const filteredUsers = usersList.filter(u => (u.email || '').toLowerCase().includes(userSearch.toLowerCase()));
+  const paginatedUsers = filteredUsers.slice((userPage - 1) * itemsPerPage, userPage * itemsPerPage);
+  const totalUserPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
   const handleSavePrices = async () => {
     setIsSaving(true);
     const allItems: any[] = [];
     Object.entries(gamePrices).forEach(([cat, items]) => {
       (items as any[]).forEach(item => {
-        allItems.push({
-          id: item.id, 
-          category: cat, 
-          name: item.name, 
-          bonus: item.bonus || 'No bonus', 
-          price: Number(item.price) || 0 
-        });
+        allItems.push({ id: item.id, category: cat, name: item.name, bonus: item.bonus || 'No bonus', price: Number(item.price) || 0 });
       });
     });
-
     try {
       const result = await savePricesToDb(allItems);
       if (!result.success) throw new Error(result.error);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error: any) {
-      alert("Error saving to database: " + error.message);
-    } finally {
-      setIsSaving(false);
-    }
+      alert("Error saving: " + error.message);
+    } finally { setIsSaving(false); }
   };
 
   const handlePriceChange = (category: keyof typeof gamePrices, id: string, newPrice: string) => {
     let sanitizedPrice = newPrice.replace(/^0+/, '');
-    if (sanitizedPrice === '') {
-      sanitizedPrice = ''; 
-    }
-    setGamePrices(prev => ({
-      ...prev,
-      [category]: prev[category].map(item => item.id === id ? { ...item, price: sanitizedPrice as any } : item)
-    }));
+    if (sanitizedPrice === '') sanitizedPrice = ''; 
+    setGamePrices(prev => ({ ...prev, [category]: prev[category].map(item => item.id === id ? { ...item, price: sanitizedPrice as any } : item) }));
   };
 
   const handleSendAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!annTitle || !annMessage) {
-      alert("ခေါင်းစဉ်နှင့် စာသား ထည့်ပါ။");
-      return;
-    }
+    if (!annTitle || !annMessage) return alert("ခေါင်းစဉ်နှင့် စာသား ထည့်ပါ။");
     setIsSendingAnn(true);
     try {
-      const { error } = await supabase
-        .from('announcements')
-        .insert([{ title: annTitle, message: annMessage, type: annType }]);
-      
+      const { error } = await supabase.from('announcements').insert([{ title: annTitle, message: annMessage, type: annType }]);
       if (error) throw error;
-      alert("✅ ကြေငြာချက်ကို Inbox ထဲသို့ အောင်မြင်စွာ ပေးပို့ပြီးပါပြီ!");
-      setAnnTitle('');
-      setAnnMessage('');
-    } catch (err: any) {
-      alert("Error sending announcement: " + err.message);
-    } finally {
-      setIsSendingAnn(false);
-    }
+      alert("✅ ကြေငြာချက် ပေးပို့ပြီးပါပြီ!");
+      setAnnTitle(''); setAnnMessage('');
+    } catch (err: any) { alert("Error: " + err.message); } finally { setIsSendingAnn(false); }
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -364,10 +375,7 @@ export default function AdminPanel() {
     else alert("Invalid login!");
   };
 
-  const categoryNames: Record<string, string> = {
-    mlbb: 'Mobile Legends (MLBB)', mcgg: 'Magic Chess', pubg: 'PUBG Mobile',
-    ucPack: 'UC Packs', telegram: 'Telegram Premium', heartopia: 'Heartopia', smileCoin: 'Smile Coin'
-  };
+  const categoryNames: Record<string, string> = { mlbb: 'Mobile Legends (MLBB)', mcgg: 'Magic Chess', pubg: 'PUBG Mobile', ucPack: 'UC Packs', telegram: 'Telegram Premium', heartopia: 'Heartopia', smileCoin: 'Smile Coin' };
 
   if (!isLoggedIn) {
     return (
@@ -418,7 +426,7 @@ export default function AdminPanel() {
     <main className="min-h-screen bg-[#f3f4f6] font-sans flex h-screen overflow-hidden">
       
       {/* SIDEBAR */}
-      <div className="w-64 bg-indigo-700 text-white flex flex-col m-4 rounded-[30px] shadow-xl overflow-hidden relative z-20">
+      <div className="w-64 bg-indigo-700 text-white flex flex-col m-4 rounded-[30px] shadow-xl overflow-hidden relative z-20 shrink-0">
         <div className="p-8 flex items-center justify-center border-b border-indigo-600/50">
           <div className="flex flex-col items-center">
             <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-3 shadow-md overflow-hidden">
@@ -435,7 +443,7 @@ export default function AdminPanel() {
             Dashboard
           </button>
           
-          <button onClick={() => setActiveTab('orders')} className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'orders' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
+          <button onClick={() => {setActiveTab('orders'); setOrderPage(1);}} className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'orders' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
             <div className="flex items-center gap-3">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
               Orders
@@ -443,12 +451,12 @@ export default function AdminPanel() {
             {stats.pendingOrders > 0 && <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{stats.pendingOrders}</span>}
           </button>
 
-          <button onClick={() => setActiveTab('wallet')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'wallet' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
+          <button onClick={() => {setActiveTab('wallet'); setWalletPage(1);}} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'wallet' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
             Wallet Topups
           </button>
 
-          <button onClick={() => setActiveTab('users')} className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'users' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
+          <button onClick={() => {setActiveTab('users'); setUserPage(1);}} className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'users' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
             <div className="flex items-center gap-3">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
               Users
@@ -479,7 +487,7 @@ export default function AdminPanel() {
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         
         {/* Top Header */}
-        <div className="h-20 flex items-center justify-between px-8 bg-transparent">
+        <div className="h-20 flex items-center justify-between px-8 bg-transparent shrink-0">
            <h2 className="text-2xl font-black text-gray-800 capitalize tracking-tight">
              {activeTab === 'mapping' ? 'Edit Game Prices' : activeTab === 'announcements' ? 'Broadcast Message' : activeTab}
            </h2>
@@ -584,14 +592,41 @@ export default function AdminPanel() {
 
           {/* ================= TAB 2: ORDERS ================= */}
           {activeTab === 'orders' && (
-            <div className="bg-white rounded-[30px] p-6 shadow-sm border border-gray-100 min-h-full">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-gray-800">Recent Transactions</h3>
-                <button onClick={fetchOrders} className="text-xs bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold hover:bg-gray-200">🔄 Refresh</button>
+            <div className="bg-white rounded-[30px] p-6 shadow-sm border border-gray-100 min-h-full flex flex-col">
+              
+              {/* --- SEARCH & FILTER UI (ORDERS) --- */}
+              <div className="flex flex-col xl:flex-row gap-4 mb-6 items-center justify-between">
+                <div className="flex items-center gap-4 w-full xl:w-auto">
+                   <h3 className="font-bold text-gray-800 shrink-0">Recent Transactions</h3>
+                   <button onClick={fetchOrders} className="text-xs bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 shrink-0">🔄 Refresh</button>
+                   {/* Export CSV Button */}
+                   <button onClick={() => downloadCSV(filteredOrders, 'orders_export.csv')} className="text-xs bg-green-100 text-green-700 px-4 py-2 rounded-xl font-bold hover:bg-green-200 shrink-0 flex items-center gap-1">
+                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export
+                   </button>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
+                   <input 
+                     type="text" 
+                     placeholder="Search Email, ID or Item..." 
+                     value={orderSearch} 
+                     onChange={e => {setOrderSearch(e.target.value); setOrderPage(1);}} 
+                     className="px-4 py-2 rounded-xl border border-gray-200 text-sm w-full sm:w-64 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                   />
+                   <select 
+                     value={orderStatusFilter} 
+                     onChange={e => {setOrderStatusFilter(e.target.value); setOrderPage(1);}} 
+                     className="px-4 py-2 rounded-xl border border-gray-200 text-sm w-full sm:w-auto focus:outline-none focus:border-indigo-500"
+                   >
+                      <option value="all">All Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="done">Done</option>
+                      <option value="refunded">Refunded</option>
+                   </select>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                {orders.map((order) => (
+              <div className="space-y-4 flex-1">
+                {paginatedOrders.map((order) => (
                   <div key={order.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl border border-gray-100 hover:border-indigo-100 hover:shadow-md transition-all bg-gray-50/50">
                     
                     <div className="flex items-center gap-4 mb-4 md:mb-0">
@@ -602,15 +637,7 @@ export default function AdminPanel() {
                             return <span className="text-indigo-600 font-black text-xs uppercase">{(order.game_name || 'UNK').substring(0, 3)}</span>;
                           }
                           return (
-                            <img 
-                              src={logoSrc} 
-                              alt={order.game_name} 
-                              className="w-full h-full object-cover" 
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.parentElement!.innerHTML = `<span class="text-indigo-600 font-black text-xs uppercase">${(order.game_name || 'UNK').substring(0, 3)}</span>`;
-                              }} 
-                            />
+                            <img src={logoSrc} alt={order.game_name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = `<span class="text-indigo-600 font-black text-xs uppercase">${(order.game_name || 'UNK').substring(0, 3)}</span>`; }} />
                           );
                         })()}
                       </div>
@@ -624,52 +651,83 @@ export default function AdminPanel() {
                     </div>
 
                     <div className="flex flex-col md:items-end gap-1 mb-4 md:mb-0 shrink-0">
-                      <span className="font-black text-indigo-600">{order.price.toLocaleString()} Ks</span>
+                      <span className={`font-black ${order.status === 'refunded' ? 'text-gray-400 line-through' : 'text-indigo-600'}`}>{order.price.toLocaleString()} Ks</span>
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{order.payment_method}</span>
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
-                       {order.status === 'pending' ? (
-                         <span className="px-3 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-lg uppercase">Pending</span>
-                       ) : (
-                         <span className="px-3 py-1 bg-green-100 text-green-600 text-xs font-bold rounded-lg uppercase">Done</span>
-                       )}
+                       {order.status === 'pending' && <span className="px-3 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-lg uppercase">Pending</span>}
+                       {order.status === 'done' && <span className="px-3 py-1 bg-green-100 text-green-600 text-xs font-bold rounded-lg uppercase">Done</span>}
+                       {order.status === 'refunded' && <span className="px-3 py-1 bg-gray-200 text-gray-600 text-xs font-bold rounded-lg uppercase">Refunded</span>}
 
                        {order.slip_url && (
-                         <a href={order.slip_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300" title="View Screenshot">
-                           🖼️
-                         </a>
+                         <a href={order.slip_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300" title="View Screenshot">🖼️</a>
                        )}
                        
                        {order.status === 'pending' && (
-                         <button onClick={() => markAsDone(order.id)} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700" title="Mark as Done">
-                           ✔️
-                         </button>
+                         <button onClick={() => markAsDone(order.id)} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700" title="Mark as Done">✔️</button>
                        )}
                        
-                       <button onClick={() => deleteOrder(order.id)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200" title="Delete">
-                         🗑️
-                       </button>
+                       {/* 1-Click Refund Button */}
+                       {order.status !== 'refunded' && (
+                         <button onClick={() => refundOrder(order)} className="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200" title="Refund to Wallet">🔙</button>
+                       )}
+
+                       <button onClick={() => deleteOrder(order.id)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200" title="Delete">🗑️</button>
                     </div>
                   </div>
                 ))}
-                {orders.length === 0 && <div className="text-center text-gray-400 font-bold py-10">No orders yet</div>}
+                {paginatedOrders.length === 0 && <div className="text-center text-gray-400 font-bold py-10">No orders found</div>}
               </div>
+
+              {/* PAGINATION CONTROLS */}
+              {totalOrderPages > 1 && (
+                <div className="mt-6 flex items-center justify-center gap-2">
+                  <button onClick={() => setOrderPage(p => Math.max(1, p - 1))} disabled={orderPage === 1} className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 font-bold text-sm disabled:opacity-50">Prev</button>
+                  <span className="text-sm font-bold text-gray-600">Page {orderPage} of {totalOrderPages}</span>
+                  <button onClick={() => setOrderPage(p => Math.min(totalOrderPages, p + 1))} disabled={orderPage === totalOrderPages} className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 font-bold text-sm disabled:opacity-50">Next</button>
+                </div>
+              )}
             </div>
           )}
 
           {/* ================= TAB 3: WALLET TOPUPS ================= */}
           {activeTab === 'wallet' && (
-            <div className="bg-white rounded-[30px] p-6 shadow-sm border border-gray-100 min-h-full">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-gray-800">Wallet Top-up Requests</h3>
-                <button onClick={fetchWalletTopups} className="text-xs bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold hover:bg-gray-200">🔄 Refresh</button>
+            <div className="bg-white rounded-[30px] p-6 shadow-sm border border-gray-100 min-h-full flex flex-col">
+              
+              {/* --- SEARCH & FILTER UI (WALLET) --- */}
+              <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                   <h3 className="font-bold text-gray-800 shrink-0">Wallet Top-up Requests</h3>
+                   <button onClick={fetchWalletTopups} className="text-xs bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 shrink-0">🔄 Refresh</button>
+                   {/* Export CSV Button */}
+                   <button onClick={() => downloadCSV(filteredWalletTopups, 'wallet_export.csv')} className="text-xs bg-green-100 text-green-700 px-4 py-2 rounded-xl font-bold hover:bg-green-200 shrink-0 flex items-center gap-1">
+                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export
+                   </button>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                   <input 
+                     type="text" 
+                     placeholder="Search Email..." 
+                     value={walletSearch} 
+                     onChange={e => {setWalletSearch(e.target.value); setWalletPage(1);}} 
+                     className="px-4 py-2 rounded-xl border border-gray-200 text-sm w-full sm:w-64 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                   />
+                   <select 
+                     value={walletStatusFilter} 
+                     onChange={e => {setWalletStatusFilter(e.target.value); setWalletPage(1);}} 
+                     className="px-4 py-2 rounded-xl border border-gray-200 text-sm w-full sm:w-auto focus:outline-none focus:border-indigo-500"
+                   >
+                      <option value="all">All Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="done">Approved</option>
+                   </select>
+                </div>
               </div>
               
-              <div className="space-y-4">
-                {walletTopups.map((topup) => (
+              <div className="space-y-4 flex-1">
+                {paginatedWallet.map((topup) => (
                   <div key={topup.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl border border-gray-100 hover:border-indigo-100 hover:shadow-md transition-all bg-gray-50/50">
-                    
                     <div className="flex items-center gap-4 mb-4 md:mb-0">
                       <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
@@ -679,55 +737,64 @@ export default function AdminPanel() {
                         <p className="text-xs text-gray-500 mt-1 font-medium">{new Date(topup.created_at).toLocaleString()}</p>
                       </div>
                     </div>
-
                     <div className="flex flex-col md:items-end gap-1 mb-4 md:mb-0">
                       <span className="font-black text-indigo-600">{Number(topup.amount).toLocaleString()} Ks</span>
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{topup.type || 'N/A'}</span>
                     </div>
-
                     <div className="flex items-center gap-3">
                        {topup.status === 'pending' ? (
                          <span className="px-3 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-lg uppercase">Pending</span>
                        ) : (
                          <span className="px-3 py-1 bg-green-100 text-green-600 text-xs font-bold rounded-lg uppercase">Approved</span>
                        )}
-
                        {topup.slip_url && (
-                         <a href={topup.slip_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300" title="View Screenshot">
-                           🖼️
-                         </a>
+                         <a href={topup.slip_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300" title="View Screenshot">🖼️</a>
                        )}
-                       
                        {topup.status === 'pending' && (
-                         <button onClick={() => approveWalletTopup(topup.id, topup.email, topup.amount)} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700" title="Approve">
-                           ✔️
-                         </button>
+                         <button onClick={() => approveWalletTopup(topup.id, topup.email, topup.amount)} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700" title="Approve">✔️</button>
                        )}
-                       
-                       <button onClick={() => deleteWalletTopup(topup.id)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200" title="Delete">
-                         🗑️
-                       </button>
+                       <button onClick={() => deleteWalletTopup(topup.id)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200" title="Delete">🗑️</button>
                     </div>
                   </div>
                 ))}
-                {walletTopups.length === 0 && <div className="text-center text-gray-400 font-bold py-10">No wallet requests yet</div>}
+                {paginatedWallet.length === 0 && <div className="text-center text-gray-400 font-bold py-10">No wallet requests found</div>}
               </div>
+
+              {/* PAGINATION CONTROLS */}
+              {totalWalletPages > 1 && (
+                <div className="mt-6 flex items-center justify-center gap-2">
+                  <button onClick={() => setWalletPage(p => Math.max(1, p - 1))} disabled={walletPage === 1} className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 font-bold text-sm disabled:opacity-50">Prev</button>
+                  <span className="text-sm font-bold text-gray-600">Page {walletPage} of {totalWalletPages}</span>
+                  <button onClick={() => setWalletPage(p => Math.min(totalWalletPages, p + 1))} disabled={walletPage === totalWalletPages} className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 font-bold text-sm disabled:opacity-50">Next</button>
+                </div>
+              )}
             </div>
           )}
 
           {/* ================= TAB 4: USERS LIST ================= */}
           {activeTab === 'users' && (
-            <div className="bg-white rounded-[30px] p-6 shadow-sm border border-gray-100 min-h-full">
-              <div className="flex justify-between items-center mb-6">
+            <div className="bg-white rounded-[30px] p-6 shadow-sm border border-gray-100 min-h-full flex flex-col">
+              
+              {/* --- SEARCH UI (USERS) --- */}
+              <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
                 <div>
                    <h3 className="font-bold text-gray-800 text-lg">Registered Users</h3>
-                   <p className="text-xs text-gray-500 mt-1 font-medium">Total: {usersList.length} Accounts</p>
+                   <p className="text-xs text-gray-500 mt-1 font-medium">Total: {filteredUsers.length} Accounts</p>
                 </div>
-                <button onClick={fetchUsers} className="text-xs bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold hover:bg-gray-200">🔄 Refresh</button>
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                   <input 
+                     type="text" 
+                     placeholder="Search User Email..." 
+                     value={userSearch} 
+                     onChange={e => {setUserSearch(e.target.value); setUserPage(1);}} 
+                     className="px-4 py-2 rounded-xl border border-gray-200 text-sm w-full md:w-64 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                   />
+                   <button onClick={fetchUsers} className="text-xs bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 shrink-0">🔄 Refresh</button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {usersList.map((user, index) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 content-start">
+                {paginatedUsers.map((user, index) => (
                   <div key={index} className="flex items-center justify-between p-4 rounded-2xl border border-gray-100 hover:border-indigo-100 hover:shadow-md transition-all bg-gray-50/50">
                     <div className="flex items-center gap-3 overflow-hidden">
                       <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
@@ -744,8 +811,17 @@ export default function AdminPanel() {
                     </div>
                   </div>
                 ))}
-                {usersList.length === 0 && <div className="col-span-full text-center text-gray-400 font-bold py-10">No users found</div>}
+                {paginatedUsers.length === 0 && <div className="col-span-full text-center text-gray-400 font-bold py-10">No users found</div>}
               </div>
+
+              {/* PAGINATION CONTROLS */}
+              {totalUserPages > 1 && (
+                <div className="mt-6 flex items-center justify-center gap-2">
+                  <button onClick={() => setUserPage(p => Math.max(1, p - 1))} disabled={userPage === 1} className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 font-bold text-sm disabled:opacity-50">Prev</button>
+                  <span className="text-sm font-bold text-gray-600">Page {userPage} of {totalUserPages}</span>
+                  <button onClick={() => setUserPage(p => Math.min(totalUserPages, p + 1))} disabled={userPage === totalUserPages} className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 font-bold text-sm disabled:opacity-50">Next</button>
+                </div>
+              )}
             </div>
           )}
 
