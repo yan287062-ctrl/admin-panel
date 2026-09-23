@@ -12,24 +12,40 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const BOT_TOKEN = "8916421457:AAE8spRRfqR5fc3MDeWPdpfQoPHsEXmwfp0"; 
 const ADMIN_CHAT_ID = "1934339791"; 
 
-// Smile.One ကနေ လက်ကျန်ငွေ လှမ်းဆွဲမယ့် Function
+// 🌟 Cloudflare ကို ကျော်ဖို့ Headers အပြည့်အစုံနဲ့ ပြင်ထားတဲ့ Function 🌟
 async function fetchSmileBalance(cookie: string): Promise<string | null> {
     try {
         const response = await fetch("https://www.smile.one/br/smilecoin/record", {
             method: 'GET',
             headers: {
-                "User-Agent": "Mozilla/5.0",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Cache-Control": "max-age=0",
+                "Connection": "keep-alive",
+                "Sec-Ch-Ua": '"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"',
+                "Sec-Ch-Ua-Mobile": "?0",
+                "Sec-Ch-Ua-Platform": '"Windows"',
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
                 "Cookie": cookie
             }
         });
         const html = await response.text();
         
+        // Console မှာ စစ်ဆေးနိုင်ရန်
+        console.log("Smile.One HTML Snippet:", html.substring(0, 150)); 
+
         const match = html.match(/<span class="currency">([\d,.]+)<\/span>/);
         if (match && match[1]) {
             return match[1]; 
         }
         return null; 
     } catch (e) {
+        console.error("Fetch Error:", e);
         return null;
     }
 }
@@ -77,7 +93,7 @@ export async function POST(request: Request) {
         const msgData = await msgRes.json();
         const messageId = msgData.result.message_id;
 
-        // Balance လှမ်းဆွဲမယ်
+        // Balance လှမ်းဆွဲမယ် (Cloudflare ကျော်မယ့် Headers နဲ့)
         const currentBalance = await fetchSmileBalance(newCookie);
         let activityStatus = "Active ✅";
         let finalBalance = currentBalance;
@@ -87,7 +103,6 @@ export async function POST(request: Request) {
             finalBalance = "N/A";
         }
 
-        // ✅ Type error ရှင်းထားသော အပိုင်း ✅
         const balanceToSave: string = (finalBalance && finalBalance !== "N/A") ? finalBalance.replace(/,/g, '') : "0";
 
         // Database ထဲမှာ Update လုပ်မယ်
