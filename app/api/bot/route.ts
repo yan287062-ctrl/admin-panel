@@ -86,7 +86,6 @@ export async function POST(request: Request) {
         "X-Requested-With": "XMLHttpRequest"
     };
 
-    // Dictionary ထဲက ယူမယ် (မတွေ့ရင် Error ပြမယ်)
     const productId = product_mapping[item_name];
 
     if (!productId) {
@@ -161,20 +160,42 @@ export async function POST(request: Request) {
     });
     const payData = await payRes.json();
 
+    // ❌ ငွေပေးချေမှု မအောင်မြင်ပါက (Coin မလောက်ခြင်း စသည်)
     if (payData.status !== 200) {
-        return NextResponse.json({ success: false, message: "Payment failed. Insufficient Smile Coins or invalid cookie." });
+        const errorCaption = `❌ <b>Auto Top-up Failed!</b>\n\n`
+                           + `👤 <b>Account:</b> <code>${accountName}</code>\n`
+                           + `🆔 <b>Game ID:</b> <code>${player_id} ${zone_id ? `(${zone_id})` : ''}</code>\n`
+                           + `💎 <b>Item:</b> ${item_name}\n`
+                           + `⚠️ <b>Reason:</b> Insufficient Smile Coins or expired session.\n`
+                           + `<i>ကျေးဇူးပြု၍ Smile.One အကောင့်တွင် Coin လက်ကျန်ကို စစ်ဆေးပါ။</i>`;
+        try {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    chat_id: ADMIN_CHAT_ID, 
+                    text: errorCaption, 
+                    parse_mode: 'HTML' 
+                })
+            });
+        } catch (tgError) {
+            console.error("Failed to send Error Telegram receipt", tgError);
+        }
+        return NextResponse.json({ success: false, message: "Payment failed. Insufficient Smile Coins." });
     }
 
+    // ✅ ငွေပေးချေမှု အောင်မြင်ပါက
     await supabase.from('orders').update({ status: 'success' }).eq('id', order_id);
 
     const deductedCoins = payData.amount || "N/A"; 
     const currentBalance = payData.balance || "N/A"; 
 
+    // Coin Balance အသစ်ကို Database သို့ သိမ်းခြင်း
     if (currentBalance !== "N/A") {
       await supabase.from('bot_settings').update({ coin_balance: currentBalance.toString() }).eq('id', 1);
     }
 
-    // --- 4. Telegram Receipt ---
+    // --- 4. Telegram Success Receipt ---
     const receiptCaption = `✅ <b>Auto Top-up Successful!</b>\n\n`
                          + `👤 <b>Account:</b> <code>${accountName}</code>\n`
                          + `🆔 <b>Game ID:</b> <code>${player_id} ${zone_id ? `(${zone_id})` : ''}</code>\n`
