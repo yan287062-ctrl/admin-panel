@@ -104,7 +104,7 @@ export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'wallet' | 'users' | 'mapping' | 'announcements'>('dashboard'); 
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'wallet' | 'users' | 'mapping' | 'bot' | 'announcements'>('dashboard'); 
   
   const [orders, setOrders] = useState<any[]>([]);
   const [walletTopups, setWalletTopups] = useState<any[]>([]);
@@ -113,6 +113,10 @@ export default function AdminPanel() {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // 🌟 Bot Settings States 🌟
+  const [botCookie, setBotCookie] = useState('');
+  const [smileCoin, setSmileCoin] = useState('Loading...');
 
   // Search, Filter & Pagination States
   const [orderSearch, setOrderSearch] = useState('');
@@ -178,7 +182,7 @@ export default function AdminPanel() {
         data.forEach(order => {
           const orderDate = new Date(order.created_at).getTime();
           if (order.status === 'pending') pCount++;
-          else if (order.status === 'done') {
+          else if (order.status === 'done' || order.status === 'success') { 
             dCount++;
             const price = Number(order.price) || 0;
             allSales += price;
@@ -224,13 +228,88 @@ export default function AdminPanel() {
     }
   };
 
+  // 🌟 Fetch Bot Settings 🌟
+  const fetchBotSettings = async () => {
+    try {
+      const { data } = await supabase.from('bot_settings').select('*').eq('id', 1).single();
+      if (data) {
+        setBotCookie(data.cookie || '');
+        setSmileCoin(data.coin_balance || '0');
+      }
+    } catch (err) {
+      console.log("Bot settings not found or empty.");
+    }
+  };
+
+  // 🌟 Save Bot Cookie 🌟
+  const saveBotCookie = async () => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from('bot_settings').upsert({ 
+        id: 1, 
+        cookie: botCookie, 
+        updated_at: new Date() 
+      });
+      if (error) throw error;
+      alert("✅ Cookie Saved! Auto Bot will now use this cookie.");
+    } catch (err: any) {
+      alert("Error saving cookie: " + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   useEffect(() => {
     if (isLoggedIn) {
-      fetchOrders(); fetchWalletTopups(); fetchRealPrices(); fetchUsers();
+      fetchOrders(); 
+      fetchWalletTopups(); 
+      fetchRealPrices(); 
+      fetchUsers();
+      fetchBotSettings();
     }
   }, [isLoggedIn]);
 
-  // Actions
+  // 🌟 1. Approve Order for Auto Topup (Bot Trigger API ခေါ်ခြင်း) 🌟
+  const approveOrderForBot = async (order: any) => {
+    // ပထမဆုံး အော်ဒါကို 'approved' ပြောင်းမယ် (UI မှာ သိသာအောင်)
+    try {
+      await supabase.from('orders').update({ status: 'approved' }).eq('id', order.id);
+      fetchOrders();
+      
+      alert("⏳ Bot သို့ အော်ဒါပို့နေပါသည်... ကျေးဇူးပြု၍ ခေတ္တစောင့်ပါ။");
+
+      // Bot API (/api/bot) ကို လှမ်းခေါ်မယ်
+      const response = await fetch('/api/bot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_id: order.id,
+          player_id: order.player_id,
+          zone_id: order.zone_id,
+          item_name: order.item_name,
+          game_name: order.game_name
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert("✅ " + result.message);
+      } else {
+        alert("❌ Bot Error: " + result.message);
+        // Error တက်ရင် Pending ပြန်ထားမယ်
+        await supabase.from('orders').update({ status: 'pending' }).eq('id', order.id);
+      }
+      fetchOrders(); // နောက်ဆုံး အခြေအနေကို ပြန်ဆွဲယူမယ်
+      
+    } catch (err: any) {
+      alert("Error triggering bot: " + err.message);
+      await supabase.from('orders').update({ status: 'pending' }).eq('id', order.id);
+      fetchOrders();
+    }
+  };
+
+  // 🌟 2. Mark as Done Manually 🌟
   const markAsDone = async (id: string) => {
     await supabase.from('orders').update({ status: 'done' }).eq('id', id);
     fetchOrders();
@@ -469,6 +548,11 @@ export default function AdminPanel() {
             Edit Prices
           </button>
 
+          <button onClick={() => setActiveTab('bot')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'bot' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+            Bot & Cookie
+          </button>
+
           <button onClick={() => setActiveTab('announcements')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'announcements' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
             Broadcast
@@ -594,12 +678,10 @@ export default function AdminPanel() {
           {activeTab === 'orders' && (
             <div className="bg-white rounded-[30px] p-6 shadow-sm border border-gray-100 min-h-full flex flex-col">
               
-              {/* --- SEARCH & FILTER UI (ORDERS) --- */}
               <div className="flex flex-col xl:flex-row gap-4 mb-6 items-center justify-between">
                 <div className="flex items-center gap-4 w-full xl:w-auto">
                    <h3 className="font-bold text-gray-800 shrink-0">Recent Transactions</h3>
                    <button onClick={fetchOrders} className="text-xs bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 shrink-0">🔄 Refresh</button>
-                   {/* Export CSV Button */}
                    <button onClick={() => downloadCSV(filteredOrders, 'orders_export.csv')} className="text-xs bg-green-100 text-green-700 px-4 py-2 rounded-xl font-bold hover:bg-green-200 shrink-0 flex items-center gap-1">
                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export
                    </button>
@@ -619,7 +701,9 @@ export default function AdminPanel() {
                    >
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>
+                      <option value="approved">Approved (Bot)</option>
                       <option value="done">Done</option>
+                      <option value="success">Success (Bot)</option>
                       <option value="refunded">Refunded</option>
                    </select>
                 </div>
@@ -657,7 +741,8 @@ export default function AdminPanel() {
 
                     <div className="flex items-center gap-3 shrink-0">
                        {order.status === 'pending' && <span className="px-3 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-lg uppercase">Pending</span>}
-                       {order.status === 'done' && <span className="px-3 py-1 bg-green-100 text-green-600 text-xs font-bold rounded-lg uppercase">Done</span>}
+                       {order.status === 'approved' && <span className="px-3 py-1 bg-blue-100 text-blue-600 text-xs font-bold rounded-lg uppercase">Approved (Bot)</span>}
+                       {(order.status === 'done' || order.status === 'success') && <span className="px-3 py-1 bg-green-100 text-green-600 text-xs font-bold rounded-lg uppercase">Success</span>}
                        {order.status === 'refunded' && <span className="px-3 py-1 bg-gray-200 text-gray-600 text-xs font-bold rounded-lg uppercase">Refunded</span>}
 
                        {order.slip_url && (
@@ -665,10 +750,12 @@ export default function AdminPanel() {
                        )}
                        
                        {order.status === 'pending' && (
-                         <button onClick={() => markAsDone(order.id)} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700" title="Mark as Done">✔️</button>
+                         <div className="flex gap-2">
+                           <button onClick={() => approveOrderForBot(order)} className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow-sm text-xs font-bold" title="Approve for Bot Auto Topup">🤖 Auto Fill</button>
+                           <button onClick={() => markAsDone(order.id)} className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600" title="Mark as Done (Manual)">✔️</button>
+                         </div>
                        )}
                        
-                       {/* 1-Click Refund Button */}
                        {order.status !== 'refunded' && (
                          <button onClick={() => refundOrder(order)} className="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200" title="Refund to Wallet">🔙</button>
                        )}
@@ -680,7 +767,6 @@ export default function AdminPanel() {
                 {paginatedOrders.length === 0 && <div className="text-center text-gray-400 font-bold py-10">No orders found</div>}
               </div>
 
-              {/* PAGINATION CONTROLS */}
               {totalOrderPages > 1 && (
                 <div className="mt-6 flex items-center justify-center gap-2">
                   <button onClick={() => setOrderPage(p => Math.max(1, p - 1))} disabled={orderPage === 1} className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 font-bold text-sm disabled:opacity-50">Prev</button>
@@ -695,12 +781,10 @@ export default function AdminPanel() {
           {activeTab === 'wallet' && (
             <div className="bg-white rounded-[30px] p-6 shadow-sm border border-gray-100 min-h-full flex flex-col">
               
-              {/* --- SEARCH & FILTER UI (WALLET) --- */}
               <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
                 <div className="flex items-center gap-4 w-full md:w-auto">
                    <h3 className="font-bold text-gray-800 shrink-0">Wallet Top-up Requests</h3>
                    <button onClick={fetchWalletTopups} className="text-xs bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 shrink-0">🔄 Refresh</button>
-                   {/* Export CSV Button */}
                    <button onClick={() => downloadCSV(filteredWalletTopups, 'wallet_export.csv')} className="text-xs bg-green-100 text-green-700 px-4 py-2 rounded-xl font-bold hover:bg-green-200 shrink-0 flex items-center gap-1">
                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export
                    </button>
@@ -760,7 +844,6 @@ export default function AdminPanel() {
                 {paginatedWallet.length === 0 && <div className="text-center text-gray-400 font-bold py-10">No wallet requests found</div>}
               </div>
 
-              {/* PAGINATION CONTROLS */}
               {totalWalletPages > 1 && (
                 <div className="mt-6 flex items-center justify-center gap-2">
                   <button onClick={() => setWalletPage(p => Math.max(1, p - 1))} disabled={walletPage === 1} className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 font-bold text-sm disabled:opacity-50">Prev</button>
@@ -775,7 +858,6 @@ export default function AdminPanel() {
           {activeTab === 'users' && (
             <div className="bg-white rounded-[30px] p-6 shadow-sm border border-gray-100 min-h-full flex flex-col">
               
-              {/* --- SEARCH UI (USERS) --- */}
               <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
                 <div>
                    <h3 className="font-bold text-gray-800 text-lg">Registered Users</h3>
@@ -814,7 +896,6 @@ export default function AdminPanel() {
                 {paginatedUsers.length === 0 && <div className="col-span-full text-center text-gray-400 font-bold py-10">No users found</div>}
               </div>
 
-              {/* PAGINATION CONTROLS */}
               {totalUserPages > 1 && (
                 <div className="mt-6 flex items-center justify-center gap-2">
                   <button onClick={() => setUserPage(p => Math.max(1, p - 1))} disabled={userPage === 1} className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 font-bold text-sm disabled:opacity-50">Prev</button>
@@ -884,7 +965,44 @@ export default function AdminPanel() {
             </div>
           )}
 
-          {/* ================= TAB 6: BROADCAST / ANNOUNCEMENTS ================= */}
+          {/* ================= TAB 6: BOT SETTINGS (NEW) ================= */}
+          {activeTab === 'bot' && (
+            <div className="bg-white rounded-[30px] p-6 md:p-8 shadow-sm border border-gray-100 min-h-full">
+              <div className="mb-8">
+                <h3 className="text-2xl font-black text-gray-800 mb-2">Bot Settings & Cookie</h3>
+                <p className="text-gray-500 text-sm">Manage your Smile.One cookie and monitor coin balance. Database syncing ensures auto top-up works flawlessly.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 flex flex-col justify-center items-center text-center">
+                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-2xl mb-4 shadow-sm">🪙</div>
+                  <h4 className="text-indigo-900 font-bold mb-1">Smile Coin Balance</h4>
+                  <p className="text-3xl font-black text-indigo-600">{smileCoin}</p>
+                  <p className="text-xs text-indigo-400 mt-2">Updated automatically</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Smile.One Cookie String</label>
+                <textarea
+                  value={botCookie}
+                  onChange={(e) => setBotCookie(e.target.value)}
+                  rows={6}
+                  placeholder="Paste your active Smile.One cookie here..."
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all shadow-sm resize-none mb-4"
+                ></textarea>
+                <button
+                  onClick={saveBotCookie}
+                  disabled={isSaving}
+                  className={`px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-md w-full md:w-auto ${isSaving ? 'bg-gray-200 text-gray-500' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+                >
+                  {isSaving ? 'Saving...' : 'Save Cookie to Database'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ================= TAB 7: BROADCAST / ANNOUNCEMENTS ================= */}
           {activeTab === 'announcements' && (
             <div className="bg-white rounded-[30px] p-6 md:p-8 shadow-sm border border-gray-100 min-h-full">
               <div className="max-w-2xl mx-auto mt-4">
