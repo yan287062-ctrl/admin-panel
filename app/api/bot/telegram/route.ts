@@ -5,7 +5,7 @@ const supabaseUrl = 'https://admin.painggyishop.cyou/api/supabase';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlamZoc3V3YWptemlrbXVkbWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NjA4NzUsImV4cCI6MjEwMzMzNjg3NX0.x3EVXbqCmrq0yiGlKI6GrWadKWU9TuXKs5F3w8uJNQA';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const BOT_TOKEN = "8916421457:AAGIW1kDmkLqX9c4MssARYS55Co-8aemWTU";
+const BOT_TOKEN = "8916421457:AAE8spRRfqR5fc3MDeWPdpfQoPHsEXmwfp0";
 const ADMIN_CHAT_ID = "1934339791";
 
 export async function POST(request: Request) {
