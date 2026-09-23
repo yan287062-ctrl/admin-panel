@@ -8,12 +8,12 @@ const supabaseUrl = 'https://admin.painggyishop.cyou/api/supabase';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlamZoc3V3YWptemlrbXVkbWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NjA4NzUsImV4cCI6MjEwMzMzNjg3NX0.x3EVXbqCmrq0yiGlKI6GrWadKWU9TuXKs5F3w8uJNQA';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// 🌟 Bot Token နဲ့ Admin ID အမှန်
+// 🌟 Bot Token နဲ့ Admin ID
 const BOT_TOKEN = "8916421457:AAE8spRRfqR5fc3MDeWPdpfQoPHsEXmwfp0"; 
 const ADMIN_CHAT_ID = "1934339791"; 
 
-// Smile.One ကနေ လက်ကျန်ငွေ လှမ်းဆွဲမယ့် Function အသစ်
-async function fetchSmileBalance(cookie: string) {
+// Smile.One ကနေ လက်ကျန်ငွေ လှမ်းဆွဲမယ့် Function
+async function fetchSmileBalance(cookie: string): Promise<string | null> {
     try {
         const response = await fetch("https://www.smile.one/br/smilecoin/record", {
             method: 'GET',
@@ -24,12 +24,11 @@ async function fetchSmileBalance(cookie: string) {
         });
         const html = await response.text();
         
-        // HTML ထဲကနေ Coin လက်ကျန်ကို ရှာထုတ်မယ် (Regular Expression သုံးပြီး)
         const match = html.match(/<span class="currency">([\d,.]+)<\/span>/);
         if (match && match[1]) {
-            return match[1]; // လက်ကျန်ငွေ ဂဏန်းကို ပြန်ပေးမယ်
+            return match[1]; 
         }
-        return null; // ရှာမတွေ့ရင် null
+        return null; 
     } catch (e) {
         return null;
     }
@@ -62,11 +61,11 @@ export async function POST(request: Request) {
             })
         });
       }
-      // 2. /setcookie (အသစ်ပြင်ဆင်ထားသော အပိုင်း)
+      // 2. /setcookie
       else if (text.startsWith('/setcookie ')) {
         const newCookie = text.replace('/setcookie ', '').trim();
         
-        // ချက်ချင်း Telegram ကို "စစ်ဆေးနေပါသည်" လို့ အရင်ပို့မယ်
+        // Telegram ကို "စစ်ဆေးနေပါသည်" လို့ အရင်ပို့မယ်
         const msgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -78,24 +77,26 @@ export async function POST(request: Request) {
         const msgData = await msgRes.json();
         const messageId = msgData.result.message_id;
 
-        // Smile.One ဆီကနေ Balance လှမ်းဆွဲမယ်
+        // Balance လှမ်းဆွဲမယ်
         const currentBalance = await fetchSmileBalance(newCookie);
         let activityStatus = "Active ✅";
         let finalBalance = currentBalance;
 
-        // အကယ်၍ Cookie မှားနေရင် (သို့) သက်တမ်းကုန်နေရင်
         if (!currentBalance) {
             activityStatus = "Expired / Invalid ❌";
             finalBalance = "N/A";
         }
 
+        // ✅ Type error ရှင်းထားသော အပိုင်း ✅
+        const balanceToSave: string = (finalBalance && finalBalance !== "N/A") ? finalBalance.replace(/,/g, '') : "0";
+
         // Database ထဲမှာ Update လုပ်မယ်
         await supabase.from('bot_settings').update({ 
             cookie: newCookie, 
-            coin_balance: finalBalance !== "N/A" ? finalBalance.replace(/,/g, '') : "0" 
+            coin_balance: balanceToSave 
         }).eq('id', 1);
 
-        // Telegram စာသားကို Edit လုပ်ပြီး ပြန်ပြမယ်
+        // စာသားကို Edit လုပ်မယ်
         const replyText = `✅ <b>Cookie Updated Successfully!</b>\n\n`
                         + `📊 <b>Activity:</b> ${activityStatus}\n`
                         + `🪙 <b>Current Balance:</b> ${finalBalance} Smile Coins`;
