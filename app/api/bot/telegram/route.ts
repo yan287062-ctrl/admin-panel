@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// 🌟 အရေးကြီးဆုံး: Vercel ကို Cache မလုပ်ဘဲ အမြဲ အရှင် အလုပ်လုပ်ခိုင်းခြင်း 🌟
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const supabaseUrl = 'https://admin.painggyishop.cyou/api/supabase';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlamZoc3V3YWptemlrbXVkbWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NjA4NzUsImV4cCI6MjEwMzMzNjg3NX0.x3EVXbqCmrq0yiGlKI6GrWadKWU9TuXKs5F3w8uJNQA';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// 🌟 ဒီနေရာမှာ မင်းရဲ့ Bot Token အသစ်ကို ထည့်ပါ 🌟
+// မင်းရဲ့ Bot Token နဲ့ Admin ID အမှန်
 const BOT_TOKEN = "8916421457:AAE8spRRfqR5fc3MDeWPdpfQoPHsEXmwfp0"; 
+const ADMIN_CHAT_ID = "1934339791"; 
 
 export async function POST(request: Request) {
   try {
@@ -14,7 +19,12 @@ export async function POST(request: Request) {
 
     if (update.message && update.message.text) {
       const text = update.message.text.trim();
-      const chatId = update.message.chat.id;
+      const chatId = update.message.chat.id.toString();
+
+      // လုံခြုံရေး: Admin ID မဟုတ်ရင် ဘာမှ ပြန်မလုပ်ပေးဘူး
+      if (chatId !== ADMIN_CHAT_ID) {
+          return NextResponse.json({ ok: true }); 
+      }
 
       // 1. /balance (Smile Coin လက်ကျန်စစ်ရန်)
       if (text === '/balance') {
@@ -62,6 +72,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Webhook Error:", error);
-    return NextResponse.json({ ok: false }, { status: 500 });
+    // Error တက်ရင်တောင် Telegram ကို 200 OK ပြန်ပေးမှ Webhook က Error ပတ်လည် မရိုက်မှာပါ
+    return NextResponse.json({ ok: true }); 
   }
+}
+
+// Vercel ပေါ်မှာ လင့်ခ်အလုပ်လုပ်/မလုပ် စမ်းသပ်ရန်
+export async function GET() {
+    return NextResponse.json({ message: "Paing Gyi Telegram Webhook is Active!" });
 }
