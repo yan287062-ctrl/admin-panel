@@ -271,14 +271,12 @@ export default function AdminPanel() {
 
   // 🌟 1. Approve Order for Auto Topup (Bot Trigger API ခေါ်ခြင်း) 🌟
   const approveOrderForBot = async (order: any) => {
-    // ပထမဆုံး အော်ဒါကို 'approved' ပြောင်းမယ် (UI မှာ သိသာအောင်)
     try {
       await supabase.from('orders').update({ status: 'approved' }).eq('id', order.id);
       fetchOrders();
       
       alert("⏳ Bot သို့ အော်ဒါပို့နေပါသည်... ကျေးဇူးပြု၍ ခေတ္တစောင့်ပါ။");
 
-      // Bot API (/api/bot) ကို လှမ်းခေါ်မယ်
       const response = await fetch('/api/bot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -297,10 +295,9 @@ export default function AdminPanel() {
         alert("✅ " + result.message);
       } else {
         alert("❌ Bot Error: " + result.message);
-        // Error တက်ရင် Pending ပြန်ထားမယ်
         await supabase.from('orders').update({ status: 'pending' }).eq('id', order.id);
       }
-      fetchOrders(); // နောက်ဆုံး အခြေအနေကို ပြန်ဆွဲယူမယ်
+      fetchOrders(); 
       
     } catch (err: any) {
       alert("Error triggering bot: " + err.message);
@@ -599,7 +596,7 @@ export default function AdminPanel() {
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
                   </div>
-                 <h3 className="text-indigo-100 text-sm font-bold mb-1">Today&apos;s Sales</h3>
+                 <h3 className="text-indigo-100 text-sm font-bold mb-1">Today's Sales</h3>
                   <p className="text-3xl font-black">{stats.todaySales.toLocaleString()} <span className="text-sm font-medium">Ks</span></p>
                 </div>
 
@@ -637,13 +634,14 @@ export default function AdminPanel() {
                 </div>
               </div>
               
-              <div className="bg-white rounded-[30px] p-8 shadow-sm border border-gray-100">
+              <div className="bg-white rounded-[30px] p-8 shadow-sm border border-gray-100 mt-6">
                 <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
                   <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                   Business Analytics
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* 🌟 ဤနေရာတွင် grid-cols-4 ဖြင့် ပြောင်းလဲရေးသားထားသည် 🌟 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                   <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col justify-center">
                     <h4 className="text-sm font-bold text-gray-500 mb-2 uppercase tracking-wider">Order Completion Rate</h4>
                     <div className="flex items-end gap-2 mb-2">
@@ -667,8 +665,22 @@ export default function AdminPanel() {
                   <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col justify-center">
                     <h4 className="text-sm font-bold text-gray-500 mb-2 uppercase tracking-wider">All-Time Revenue</h4>
                     <p className="text-3xl font-black text-green-600 mb-1">{stats.totalSales.toLocaleString()} <span className="text-sm font-medium">Ks</span></p>
-                    <p className="text-xs text-gray-400 font-medium mt-2">Total gross revenue from all completed game orders.</p>
+                    <p className="text-xs text-gray-400 font-medium mt-2">Total gross revenue from all completed orders.</p>
                   </div>
+                  
+                  {/* 🌟 အသစ်ထည့်ထားသော Registered Users ကတ် 🌟 */}
+                  <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col justify-center">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                      </div>
+                      <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Registered Users</h4>
+                    </div>
+                    <p className="text-4xl font-black text-indigo-600 mb-1">{usersList.length}</p>
+                    <p className="text-xs text-gray-400 font-medium mt-2">Total accounts opened on the website.</p>
+                  </div>
+                  {/* 🌟 ပြီးပါပြီ 🌟 */}
+                  
                 </div>
               </div>
             </div>
