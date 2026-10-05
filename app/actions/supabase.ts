@@ -10,8 +10,25 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function savePricesToDb(allItems: any[]) {
   try {
-    const { error } = await supabase.from('game_prices').upsert(allItems, { onConflict: 'id' });
-    if (error) return { success: false, error: error.message };
+    // 🌟 Error ဖြေရှင်းရန်: ID တူနေသော အချက်အလက်များကို ဖယ်ထုတ်ပါမည် 🌟
+    const uniqueItemsMap = new Map();
+    
+    allItems.forEach(item => {
+      // ID ကို Key အနေနဲ့သုံးပြီး Duplicate ဖြစ်နေရင် နောက်ဆုံးတစ်ခုကိုပဲ ယူပါမယ်
+      uniqueItemsMap.set(item.id, item);
+    });
+
+    const uniqueItems = Array.from(uniqueItemsMap.values());
+
+    // Data များလွန်းပါက အပိုင်းလိုက် (၁၀၀ စီ) ခွဲပို့ရန်
+    const chunkSize = 100;
+    for (let i = 0; i < uniqueItems.length; i += chunkSize) {
+      const chunk = uniqueItems.slice(i, i + chunkSize);
+      const { error } = await supabase.from('game_prices').upsert(chunk, { onConflict: 'id' });
+      
+      if (error) return { success: false, error: error.message };
+    }
+    
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message || "Unknown error" };
