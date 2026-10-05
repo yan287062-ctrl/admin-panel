@@ -8,8 +8,11 @@ const supabaseUrl = 'https://admin.painggyishop.cyou/api/supabase';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlamZoc3V3YWptemlrbXVkbWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NjA4NzUsImV4cCI6MjEwMzMzNjg3NX0.x3EVXbqCmrq0yiGlKI6GrWadKWU9TuXKs5F3w8uJNQA';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const initialGamePrices = {
-  mlbb: [
+// ==========================================
+// 🌟 Packages အားလုံးကို Database Category အတိုင်း သတ်မှတ်ခြင်း 🌟
+// ==========================================
+const initialGamePrices: Record<string, any[]> = {
+  mobile_legends_global: [
     { id: 'mlbb_1', name: '55 Diamonds', price: 3461 }, { id: 'mlbb_2', name: '165 Diamonds', price: 10372 },
     { id: 'mlbb_3', name: '275 Diamonds', price: 16636 }, { id: 'mlbb_4', name: '565 Diamonds', price: 34160 },
     { id: 'mlbb_5', name: 'Weekly Pass', price: 6600 }, { id: 'mlbb_6', name: 'Weekly Pass x 2', price: 13200 },
@@ -34,24 +37,71 @@ const initialGamePrices = {
     { id: 'mlbb_43', name: '6752 Diamonds', price: 398677 }, { id: 'mlbb_44', name: '7030 Diamonds', price: 415366 },
     { id: 'mlbb_45', name: '7727 Diamonds', price: 453651 }, { id: 'mlbb_46', name: '9288 Diamonds', price: 539360 }
   ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
-  mcgg: [
-    { id: 'mcgg_1', name: '10', bonus: '+ 1 Diamonds', price: 900 }, { id: 'mcgg_2', name: '20', bonus: '+ 2 Diamonds', price: 1700 },
-    { id: 'mcgg_3', name: '51', bonus: '+ 5 Diamonds', price: 4200 }, { id: 'mcgg_4', name: 'Double Dia(50+50)', bonus: 'No bonus', price: 4400 },
-    { id: 'mcgg_5', name: '102', bonus: '+ 10 Diamonds', price: 8300 }, { id: 'mcgg_6', name: 'Weekly Card', bonus: 'No bonus', price: 8800 },
-    { id: 'mcgg_7', name: 'Double Dia(150+150)', bonus: 'No bonus', price: 13000 }, { id: 'mcgg_8', name: '203', bonus: '+ 20 Diamonds', price: 16600 },
-    { id: 'mcgg_9', name: 'Double Dia(250+250)', bonus: 'No bonus', price: 21500 }, { id: 'mcgg_10', name: '303', bonus: '+ 33 Diamonds', price: 24900 },
-    { id: 'mcgg_11', name: '504', bonus: '+ 66 Diamonds', price: 41400 }, { id: 'mcgg_12', name: 'Double Dia(500+500)', bonus: 'No bonus', price: 43400 },
-    { id: 'mcgg_13', name: '1007', bonus: '+ 156 Diamonds', price: 82900 }, { id: 'mcgg_14', name: '2015', bonus: '+ 383 Diamonds', price: 165700 },
-    { id: 'mcgg_15', name: '5035', bonus: '+ 1007 Diamonds', price: 414100 }
-  ],
-  pubg: [
-    { id: 'pubg_1', name: '60 UC', price: 4106 }, { id: 'pubg_2', name: '325 UC', price: 20529 },
-    { id: 'pubg_3', name: '660 UC', price: 41059 }, { id: 'pubg_4', name: '985 UC', price: 61588 },
-    { id: 'pubg_5', name: '1320 UC', price: 82118 }, { id: 'pubg_6', name: '1980 UC', price: 123177 },
-    { id: 'pubg_7', name: '2310 UC', price: 143706 }, { id: 'pubg_8', name: '2640 UC', price: 164236 },
-    { id: 'pubg_9', name: '3850 UC', price: 239512 }, { id: 'pubg_10', name: '4180 UC', price: 260041 },
-    { id: 'pubg_11', name: '5900 UC', price: 367277 }, { id: 'pubg_12', name: '8100 UC', price: 504112 }
+  
+  mobile_legends_brazil: [
+    { id: '50_5_diamonds_first_top_up_bonus', name: '55 Diamonds', price: 3500 },
+    { id: '78_8_diamonds', name: '86 Diamonds', price: 5500 },
+    { id: 'weekly_pass', name: 'Weekly Pass', price: 6600 },
+    { id: '156_16_diamonds', name: '172 Diamonds', price: 10800 },
+    { id: '150_15_diamonds_first_top_up_bonus', name: '165 Diamonds (First Top-Up)', price: 10400 },
+    { id: '234_23_diamonds', name: '257 Diamonds', price: 16100 },
+    { id: '310_34_diamonds', name: '344 Diamonds', price: 21500 },
+    { id: '250_25_diamonds_first_top_up_bonus', name: '275 Diamonds (First Top-Up)', price: 17000 },
+    { id: '482_diamonds', name: '482 Diamonds', price: 30000 },
+    { id: '465_51_diamonds', name: '516 Diamonds', price: 26300 },
+    { id: '500_65_diamonds_first_top_up_bonus', name: '565 Diamonds (First Top-Up)', price: 34100 },
+    { id: 'twilight_pass', name: 'Twilight Pass', price: 35700 },
+    { id: '625_81_diamonds', name: '706 Diamonds', price: 43000 },
+    { id: '1860_335_diamonds', name: '2195 Diamonds', price: 128900 },
+    { id: '3099_589_diamonds', name: '3688 Diamonds', price: 215000 },
+    { id: '4649_883_diamonds', name: '5532 Diamonds', price: 324700 },
+    { id: '7740_1548_diamonds', name: '9288 Diamonds', price: 539300 }
   ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  mobile_legends_philippines: [
+    { id: '10_1_diamonds', name: '11 Diamonds', price: 900 },
+    { id: '20_2_diamonds', name: '22 Diamonds', price: 1800 },
+    { id: '51_5_diamonds', name: '56 Diamonds', price: 4300 },
+    { id: '50_5_diamonds_first_top_up_bonus', name: '55 Diamonds (First Top-Up)', price: 4200 },
+    { id: 'weekly_diamond_pass', name: 'Weekly Diamond Pass', price: 8800 },
+    { id: '102_10_diamonds', name: '112 Diamonds', price: 8500 },
+    { id: '153_15_diamonds', name: '168 Diamonds', price: 13500 },
+    { id: '203_20_diamonds', name: '223 Diamonds', price: 17000 },
+    { id: '150_15_diamonds_first_top_up_bonus', name: '165 Diamonds (First Top-Up)', price: 12500 },
+    { id: '303_33_diamonds', name: '336 Diamonds', price: 25500 },
+    { id: '250_25_diamonds_first_top_up_bonus', name: '275 Diamonds (First Top-Up)', price: 21500 },
+    { id: 'twilight_pass', name: 'Twilight Pass', price: 43500 },
+    { id: '504_66_diamonds', name: '570 Diamonds', price: 42000 },
+    { id: '500_65_diamonds_first_top_up_bonus', name: '565 Diamonds (First Top-Up)', price: 43000 },
+    { id: '1007_156_diamonds', name: '1163 Diamonds', price: 84000 },
+    { id: '2015_383_diamonds', name: '2398 Diamonds', price: 169000 },
+    { id: '5035_1007_diamonds', name: '6042 Diamonds', price: 420000 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  magic_chess_gogo_global: [
+    { id: '11_diamonds', name: '11 Diamonds', price: 900 },
+    { id: '22_diamonds', name: '22 Diamonds', price: 1700 },
+    { id: '56_diamonds', name: '56 Diamonds', price: 4200 },
+    { id: 'first_recharge_100_50_50_bonus', name: 'First Recharge 100 (50+50)', price: 4400 },
+    { id: '112_diamonds', name: '112 Diamonds', price: 8300 },
+    { id: 'weekly_card', name: 'Weekly Card', price: 8800 },
+    { id: 'first_recharge_300_150_150_bonus', name: 'First Recharge 300 (150+150)', price: 13000 },
+    { id: '223_diamonds', name: '223 Diamonds', price: 16600 },
+    { id: 'first_recharge_500_250_250_bonus', name: 'First Recharge 500 (250+250)', price: 21500 },
+    { id: '336_diamonds', name: '336 Diamonds', price: 24900 },
+    { id: '570_diamonds', name: '570 Diamonds', price: 41400 },
+    { id: 'first_recharge_1000_500_500_bonus', name: 'First Recharge 1000 (500+500)', price: 43400 },
+    { id: '1163_diamonds', name: '1163 Diamonds', price: 82900 },
+    { id: '2398_diamonds', name: '2398 Diamonds', price: 165700 },
+    { id: '6042_diamonds', name: '6042 Diamonds', price: 414100 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  pubg_mobile_manual: [
+    { id: '60_uc', name: '60 UC', price: 4106 }, { id: '325_uc', name: '325 UC', price: 20529 },
+    { id: '660_uc', name: '660 UC', price: 41059 }, { id: '1800_uc', name: '1800 UC', price: 100000 },
+    { id: '3850_uc', name: '3850 UC', price: 200000 }, { id: '8100_uc', name: '8100 UC', price: 400000 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
   ucPack: [
     { id: 'ucp_1', name: 'First Purchase Pack', price: 4100 }, { id: 'ucp_2', name: 'Prime (1 Month)', price: 4100 },
     { id: 'ucp_3', name: 'Weekly Deal Pack 1', price: 4200 }, { id: 'ucp_4', name: 'Upgradable Firearm Materials Pack', price: 12300 },
@@ -63,6 +113,7 @@ const initialGamePrices = {
     { id: 'ucp_15', name: 'Elite Pass Plus LV1-100', price: 123100 }, { id: 'ucp_16', name: 'Prime Plus (6 Months)', price: 243900 },
     { id: 'ucp_17', name: 'Prime Plus (12 Months)', price: 487800 }
   ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
   telegram: [
     { id: 'tg_1', name: '50 Stars', price: 3552 }, { id: 'tg_2', name: '75 Stars', price: 5306 },
     { id: 'tg_3', name: '100 Stars', price: 7058 }, { id: 'tg_4', name: '150 Stars', price: 10587 },
@@ -73,20 +124,170 @@ const initialGamePrices = {
     { id: 'tg_13', name: '10K Stars', price: 705816 }, { id: 'tg_14', name: '3 months premium', price: 56420 },
     { id: 'tg_15', name: '6 months premium', price: 75241 }, { id: 'tg_16', name: '12 months premium', price: 136412 }
   ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
   heartopia: [
-    { id: 'heart_1', name: '20 Heart Diamond', price: 2588 }, { id: 'heart_2', name: '60 Heart Diamond', price: 4895 },
-    { id: 'heart_3', name: '300+20 Heart Diamond', price: 24846 }, { id: 'heart_4', name: '680+50 Heart Diamond', price: 55994 },
-    { id: 'heart_5', name: '1280+90 Heart Diamond', price: 102297 }, { id: 'heart_6', name: '1980+150 Heart Diamond', price: 155703 },
-    { id: 'heart_7', name: '3280+270 Heart Diamond', price: 253623 }, { id: 'heart_8', name: '6480+570 Heart Diamond', price: 498398 },
-    { id: 'heart_9', name: 'GAMG Junior Membership', price: 2681 }, { id: 'heart_10', name: 'GAMG Formal Membership', price: 15057 },
-    { id: 'heart_11', name: 'Fashionwave Gift Box', price: 24846 }, { id: 'heart_12', name: 'Fashionwave Gift Box Upgrade', price: 31102 },
-    { id: 'heart_13', name: 'Premium Fashionwave Gift Box', price: 55994 }
+    { id: '20_heart_diamond', name: '20 Heart Diamond', price: 2500 }, 
+    { id: '60_heart_diamond', name: '60 Heart Diamond', price: 4800 },
+    { id: 'gamg_formal_membership', name: 'GAMG Formal Membership', price: 15000 },
+    { id: '320_heart_diamond', name: '320 Heart Diamond', price: 24500 }, 
+    { id: 'festival_pack', name: 'Festival Pack', price: 24500 },
+    { id: 'festival_pack_upgrade', name: 'Festival Pack Upgrade', price: 31000 },
+    { id: '730_heart_diamond', name: '730 Heart Diamond', price: 55000 },
+    { id: 'supreme_festival_pack', name: 'Supreme Festival Pack', price: 55000 },
+    { id: '1370_heart_diamond', name: '1370 Heart Diamond', price: 100000 },
+    { id: '2130_heart_diamond', name: '2130 Heart Diamond', price: 155000 },
+    { id: '3550_heart_diamond', name: '3550 Heart Diamond', price: 250000 },
+    { id: '7050_heart_diamond', name: '7050 Heart Diamond', price: 500000 }
   ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  eafc_mobile_id: [
+    { id: '40_fc_points', name: '40 FC Points', price: 1500 },
+    { id: '100_fc_points', name: '100 FC Points', price: 3800 },
+    { id: '520_fc_points', name: '520 FC Points', price: 18700 },
+    { id: '1070_fc_points', name: '1070 FC Points', price: 37600 },
+    { id: '2200_fc_points', name: '2200 FC Points', price: 77900 },
+    { id: '5750_fc_points', name: '5750 FC Points', price: 189300 },
+    { id: '12000_fc_points', name: '12000 FC Points', price: 378900 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  eafc_mobile_my: [
+    { id: '40_fc_points', name: '40 FC Points', price: 2100 },
+    { id: '100_fc_points', name: '100 FC Points', price: 5200 },
+    { id: '520_fc_points', name: '520 FC Points', price: 25400 },
+    { id: '1070_fc_points', name: '1070 FC Points', price: 47800 },
+    { id: '2200_fc_points', name: '2200 FC Points', price: 101100 },
+    { id: '5750_fc_points', name: '5750 FC Points', price: 255700 },
+    { id: '12000_fc_points', name: '12000 FC Points', price: 511600 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  genshin_impact_login: [
+    { id: '60', name: '60 Genesis Crystals', price: 3600 },
+    { id: 'blessing_of_the_welkin_moon', name: 'Blessing of the Welkin Moon', price: 18400 },
+    { id: '330', name: '300 + 30 Genesis Crystals', price: 18400 },
+    { id: 'gnostic_hymn', name: 'Gnostic Hymn', price: 37000 },
+    { id: '1090', name: '980 + 110 Genesis Crystals', price: 54800 },
+    { id: 'gnostic_chorus', name: 'Gnostic Chorus', price: 73300 },
+    { id: '2240', name: '1980 + 260 Genesis Crystals', price: 110400 },
+    { id: '3880', name: '3280 + 600 Genesis Crystals', price: 185000 },
+    { id: '8080', name: '6480 + 1600 Genesis Crystals', price: 363500 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  genshin_impact_global: [
+    { id: '60_genesis_crystals', name: '60 Genesis Crystals', price: 4500 },
+    { id: 'blessing_of_the_welkin_moon', name: 'Blessing of the Welkin Moon', price: 22600 },
+    { id: '300_30_genesis_crystals', name: '300 + 30 Genesis Crystals', price: 22600 },
+    { id: '980_110_genesis_crystals', name: '980 + 110 Genesis Crystals', price: 67800 },
+    { id: '1980_260_genesis_crystals', name: '1980 + 260 Genesis Crystals', price: 135600 },
+    { id: '3280_600_genesis_crystals', name: '3280 + 600 Genesis Crystals', price: 226000 },
+    { id: '6480_1600_genesis_crystals', name: '6480 + 1600 Genesis Crystals', price: 452000 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  capcut: [
+    { id: '1_month_eu_standard', name: '1 Month (EU) Standard', price: 38500 },
+    { id: '1_month_uk_standard', name: '1 Month (UK) Standard', price: 27500 },
+    { id: '1_month_us_standard', name: '1 Month (US) Standard', price: 74200 },
+    { id: '1_month_eu_pro', name: '1 Month (EU) Pro', price: 79700 },
+    { id: '1_month_uk_pro', name: '1 Month (UK) Pro', price: 79700 },
+    { id: '1_month_us_pro', name: '1 Month (US) Pro', price: 55000 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  discord_global: [
+    { id: 'discord_basic_1_month_subscription', name: 'Discord Basic: 1 Month', price: 20000 },
+    { id: 'discord_nitro_1_month_subscription', name: 'Discord Nitro: 1 Month', price: 40000 },
+    { id: 'discord_nitro_12_months_subscription', name: 'Discord Nitro: 12 Months', price: 400000 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  app_store_itunes_us: [
+    { id: '2_usd', name: '2 USD', price: 10000 },
+    { id: '3_usd', name: '3 USD', price: 15000 },
+    { id: '5_usd', name: '5 USD', price: 25000 },
+    { id: '10_usd', name: '10 USD', price: 47000 },
+    { id: '15_usd', name: '15 USD', price: 70000 },
+    { id: '20_usd', name: '20 USD', price: 94000 },
+    { id: '50_usd', name: '50 USD', price: 235000 },
+    { id: '100_usd', name: '100 USD', price: 470000 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  netflix_us: [
+    { id: '15_usd', name: '15 USD', price: 63000 },
+    { id: '20_usd', name: '20 USD', price: 84000 },
+    { id: '25_usd', name: '25 USD', price: 107500 },
+    { id: '30_usd', name: '30 USD', price: 126500 },
+    { id: '50_usd', name: '50 USD', price: 211000 },
+    { id: '100_usd', name: '100 USD', price: 437500 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  roblox_global: [
+    { id: '50_robux', name: '50 Robux', price: 4000 },
+    { id: '100_robux', name: '100 Robux', price: 6500 },
+    { id: '800_robux', name: '800 Robux', price: 40300 },
+    { id: '1000_robux', name: '1000 Robux', price: 50000 },
+    { id: '2000_robux', name: '2000 Robux', price: 99000 },
+    { id: '4500_robux', name: '4500 Robux', price: 213800 },
+    { id: '10000_robux', name: '10000 Robux', price: 438800 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  roblox_id: [
+    { id: '50000_idr', name: '50000 IDR', price: 11500 },
+    { id: '100000_idr', name: '100000 IDR', price: 23000 },
+    { id: '300000_idr', name: '300000 IDR', price: 75000 },
+    { id: '500000_idr', name: '500000 IDR', price: 124000 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  roblox_robux_us: [
+    { id: '50_robux', name: '50 Robux', price: 4000 },
+    { id: '100_robux', name: '100 Robux', price: 7600 },
+    { id: '555_robux', name: '555 Robux', price: 23000 },
+    { id: '1000_robux', name: '1000 Robux', price: 40500 },
+    { id: '2500_robux', name: '2500 Robux', price: 105500 },
+    { id: '11000_robux', name: '11000 Robux', price: 420500 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  minecraft_minecoins: [
+    { id: '330_minecoins', name: '330 Minecoins', price: 18600 },
+    { id: '1720_minecoins', name: '1720 Minecoins', price: 36500 },
+    { id: '3500_minecoins', name: '3500 Minecoins', price: 50800 },
+    { id: '8800_minecoins', name: '8800 Minecoins', price: 200800 }
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
   smileCoin: [
     { id: 'smile_1', name: 'Brl 300', price: 25800 },
     { id: 'smile_2', name: 'Brl 1000', price: 83800 },
     { id: 'smile_3', name: 'Brl 5000', price: 419000 }
-  ].map(pkg => ({ ...pkg, bonus: 'No bonus' }))
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  aniimo: [
+    { id: 'an1', name: '60 Stars', price: 3900 },
+    { id: 'an2', name: '300 Stars', price: 23000 },
+    { id: 'an3', name: '980 Stars', price: 67100 },
+    { id: 'an4', name: '1980 Stars', price: 134100 },
+    { id: 'an5', name: '3280 Stars', price: 227400 },
+    { id: 'an6', name: '6480 Stars', price: 439000 },
+  ].map(pkg => ({ ...pkg, bonus: 'No bonus' })),
+
+  spotify: [
+    { id: 'sp1', name: '1m - Individual', bonus: 'Individual Plan', price: 8500 },
+    { id: 'sp2', name: '3m - Individual', bonus: 'Individual Plan', price: 33000 },
+    { id: 'sp3', name: '6m - Individual', bonus: 'Individual Plan', price: 52000 },
+    { id: 'sp4', name: '12m - Individual', bonus: 'Individual Plan', price: 78000 },
+    { id: 'sp5', name: '2m - Family', bonus: 'Family plan', price: 12000 },
+    { id: 'sp6', name: '3m - Family', bonus: 'Family plan', price: 16000 },
+    { id: 'sp7', name: '6m - Family', bonus: 'Family plan', price: 29000 },
+    { id: 'sp8', name: '1yr - Family', bonus: 'Family plan', price: 50000 },
+  ].map(pkg => ({ ...pkg, bonus: pkg.bonus })),
+
+  jumpjump: [
+    { id: 'jv1', name: '1 Month - 1 Device (Share)', bonus: 'Share', price: 10000 },
+    { id: 'jv2', name: '1 Month - 1 Device (Own)', bonus: 'Own', price: 14500 },
+    { id: 'jv3', name: '1 Month - 2 Device (Own)', bonus: 'Own', price: 19000 },
+    { id: 'jv4', name: '6 Month - 2 Device (Own)', bonus: 'Own', price: 95000 },
+    { id: 'jv5', name: '12 Month - 2 Device (Own)', bonus: 'Own', price: 123000 },
+  ].map(pkg => ({ ...pkg, bonus: pkg.bonus })),
+
+  expressvpn: [
+    { id: 'ev1', name: '1 Month - 1 Device', bonus: '1 Device', price: 2000 },
+    { id: 'ev2', name: '1 Month - 12 Device', bonus: '12 Device', price: 12000 },
+  ].map(pkg => ({ ...pkg, bonus: pkg.bonus })),
 };
 
 const getGameLogo = (gameName: string) => {
@@ -96,7 +297,15 @@ const getGameLogo = (gameName: string) => {
   if (name.includes('pubg') || name.includes('uc')) return '/pubg.png';
   if (name.includes('telegram') || name.includes('tel')) return '/telegram.png';
   if (name.includes('heartopia')) return '/heartopia.png';
-  if (name.includes('smile') || name.includes('brl') || name.includes('smi')) return '/smilecoin.png';
+  if (name.includes('smile') || name.includes('brl') || name.includes('smi')) return '/smile_coin.png';
+  if (name.includes('eafc') || name.includes('fifa')) return '/eafc.jpg';
+  if (name.includes('genshin')) return '/genshin.jpg';
+  if (name.includes('capcut')) return '/capcut.jpg';
+  if (name.includes('discord')) return '/discord.jpg';
+  if (name.includes('app store') || name.includes('itunes')) return '/appstore.jpg';
+  if (name.includes('netflix')) return '/netflix-us.jpg';
+  if (name.includes('roblox') || name.includes('robux')) return '/roblox.jpg';
+  if (name.includes('minecraft')) return '/minecraft.jpg';
   return '/default-game.png';
 };
 
@@ -104,7 +313,7 @@ export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'wallet' | 'users' | 'mapping' | 'bot' | 'announcements'>('dashboard'); 
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'wallet' | 'users' | 'mapping' | 'announcements'>('dashboard'); 
   
   const [orders, setOrders] = useState<any[]>([]);
   const [walletTopups, setWalletTopups] = useState<any[]>([]);
@@ -113,10 +322,6 @@ export default function AdminPanel() {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-
-  // 🌟 Bot Settings States 🌟
-  const [botCookie, setBotCookie] = useState('');
-  const [smileCoin, setSmileCoin] = useState('Loading...');
 
   // Search, Filter & Pagination States
   const [orderSearch, setOrderSearch] = useState('');
@@ -228,44 +433,12 @@ export default function AdminPanel() {
     }
   };
 
-  // 🌟 Fetch Bot Settings 🌟
-  const fetchBotSettings = async () => {
-    try {
-      const { data } = await supabase.from('bot_settings').select('*').eq('id', 1).single();
-      if (data) {
-        setBotCookie(data.cookie || '');
-        setSmileCoin(data.coin_balance || '0');
-      }
-    } catch (err) {
-      console.log("Bot settings not found or empty.");
-    }
-  };
-
-  // 🌟 Save Bot Cookie 🌟
-  const saveBotCookie = async () => {
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from('bot_settings').upsert({ 
-        id: 1, 
-        cookie: botCookie, 
-        updated_at: new Date() 
-      });
-      if (error) throw error;
-      alert("✅ Cookie Saved! Auto Bot will now use this cookie.");
-    } catch (err: any) {
-      alert("Error saving cookie: " + err.message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   useEffect(() => {
     if (isLoggedIn) {
       fetchOrders(); 
       fetchWalletTopups(); 
       fetchRealPrices(); 
       fetchUsers();
-      fetchBotSettings();
     }
   }, [isLoggedIn]);
 
@@ -451,7 +624,33 @@ export default function AdminPanel() {
     else alert("Invalid login!");
   };
 
-  const categoryNames: Record<string, string> = { mlbb: 'Mobile Legends (MLBB)', mcgg: 'Magic Chess', pubg: 'PUBG Mobile', ucPack: 'UC Packs', telegram: 'Telegram Premium', heartopia: 'Heartopia', smileCoin: 'Smile Coin' };
+  const categoryNames: Record<string, string> = { 
+    mobile_legends_global: 'Mobile Legends (Global)',
+    mobile_legends_brazil: 'Mobile Legends (BR)',
+    mobile_legends_philippines: 'Mobile Legends (PH)',
+    magic_chess_gogo_global: 'Magic Chess Go Go',
+    pubg_mobile_manual: 'PUBG UC',
+    ucPack: 'UC Packs',
+    heartopia: 'Heartopia',
+    eafc_mobile_id: 'EAFC Mobile (ID)',
+    eafc_mobile_my: 'EAFC Mobile (MY)',
+    genshin_impact_login: 'Genshin Impact (Login)',
+    genshin_impact_global: 'Genshin Impact (Global)',
+    capcut: 'CapCut',
+    discord_global: 'Discord (Global)',
+    app_store_itunes_us: 'App Store & iTunes (US)',
+    netflix_us: 'Netflix (US)',
+    roblox_global: 'Roblox (Global)',
+    roblox_id: 'Roblox (ID)',
+    roblox_robux_us: 'Roblox Robux (US)',
+    minecraft_minecoins: 'Minecraft (Minecoins)',
+    telegram: 'Telegram Premium',
+    smileCoin: 'Smile Coin',
+    aniimo: 'Aniimo',
+    spotify: 'Spotify Premium',
+    jumpjump: 'Jump Jump VPN',
+    expressvpn: 'Express VPN'
+  };
 
   if (!isLoggedIn) {
     return (
@@ -545,11 +744,6 @@ export default function AdminPanel() {
             Edit Prices
           </button>
 
-          <button onClick={() => setActiveTab('bot')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'bot' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-            Bot & Cookie
-          </button>
-
           <button onClick={() => setActiveTab('announcements')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'announcements' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
             Broadcast
@@ -640,7 +834,6 @@ export default function AdminPanel() {
                   Business Analytics
                 </h3>
                 
-                {/* 🌟 ဤနေရာတွင် grid-cols-4 ဖြင့် ပြောင်းလဲရေးသားထားသည် 🌟 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                   <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col justify-center">
                     <h4 className="text-sm font-bold text-gray-500 mb-2 uppercase tracking-wider">Order Completion Rate</h4>
@@ -668,7 +861,6 @@ export default function AdminPanel() {
                     <p className="text-xs text-gray-400 font-medium mt-2">Total gross revenue from all completed orders.</p>
                   </div>
                   
-                  {/* 🌟 အသစ်ထည့်ထားသော Registered Users ကတ် 🌟 */}
                   <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col justify-center">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
@@ -679,7 +871,6 @@ export default function AdminPanel() {
                     <p className="text-4xl font-black text-indigo-600 mb-1">{usersList.length}</p>
                     <p className="text-xs text-gray-400 font-medium mt-2">Total accounts opened on the website.</p>
                   </div>
-                  {/* 🌟 ပြီးပါပြီ 🌟 */}
                   
                 </div>
               </div>
@@ -973,43 +1164,6 @@ export default function AdminPanel() {
                     )}
                   </div>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {/* ================= TAB 6: BOT SETTINGS (NEW) ================= */}
-          {activeTab === 'bot' && (
-            <div className="bg-white rounded-[30px] p-6 md:p-8 shadow-sm border border-gray-100 min-h-full">
-              <div className="mb-8">
-                <h3 className="text-2xl font-black text-gray-800 mb-2">Bot Settings & Cookie</h3>
-                <p className="text-gray-500 text-sm">Manage your Smile.One cookie and monitor coin balance. Database syncing ensures auto top-up works flawlessly.</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 flex flex-col justify-center items-center text-center">
-                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-2xl mb-4 shadow-sm">🪙</div>
-                  <h4 className="text-indigo-900 font-bold mb-1">Smile Coin Balance</h4>
-                  <p className="text-3xl font-black text-indigo-600">{smileCoin}</p>
-                  <p className="text-xs text-indigo-400 mt-2">Updated automatically</p>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Smile.One Cookie String</label>
-                <textarea
-                  value={botCookie}
-                  onChange={(e) => setBotCookie(e.target.value)}
-                  rows={6}
-                  placeholder="Paste your active Smile.One cookie here..."
-                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all shadow-sm resize-none mb-4"
-                ></textarea>
-                <button
-                  onClick={saveBotCookie}
-                  disabled={isSaving}
-                  className={`px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-md w-full md:w-auto ${isSaving ? 'bg-gray-200 text-gray-500' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
-                >
-                  {isSaving ? 'Saving...' : 'Save Cookie to Database'}
-                </button>
               </div>
             </div>
           )}
