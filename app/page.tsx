@@ -313,7 +313,7 @@ export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'wallet' | 'users' | 'mapping' | 'announcements'>('dashboard'); 
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'wallet' | 'users' | 'mapping' | 'calculator' | 'announcements'>('dashboard'); 
   
   const [orders, setOrders] = useState<any[]>([]);
   const [walletTopups, setWalletTopups] = useState<any[]>([]);
@@ -322,6 +322,11 @@ export default function AdminPanel() {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // 🌟 Profit Calculator States 🌟
+  const [calcRate, setCalcRate] = useState(4460);
+  const [calcUsd, setCalcUsd] = useState('');
+  const [calcSell, setCalcSell] = useState('');
 
   // Search, Filter & Pagination States
   const [orderSearch, setOrderSearch] = useState('');
@@ -442,14 +447,11 @@ export default function AdminPanel() {
     }
   }, [isLoggedIn]);
 
-  // 🌟 1. Approve Order for Auto Topup (Bot Trigger API ခေါ်ခြင်း) 🌟
   const approveOrderForBot = async (order: any) => {
     try {
       await supabase.from('orders').update({ status: 'approved' }).eq('id', order.id);
       fetchOrders();
-      
       alert("⏳ Bot သို့ အော်ဒါပို့နေပါသည်... ကျေးဇူးပြု၍ ခေတ္တစောင့်ပါ။");
-
       const response = await fetch('/api/bot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -461,9 +463,7 @@ export default function AdminPanel() {
           game_name: order.game_name
         })
       });
-
       const result = await response.json();
-
       if (result.success) {
         alert("✅ " + result.message);
       } else {
@@ -471,7 +471,6 @@ export default function AdminPanel() {
         await supabase.from('orders').update({ status: 'pending' }).eq('id', order.id);
       }
       fetchOrders(); 
-      
     } catch (err: any) {
       alert("Error triggering bot: " + err.message);
       await supabase.from('orders').update({ status: 'pending' }).eq('id', order.id);
@@ -479,7 +478,6 @@ export default function AdminPanel() {
     }
   };
 
-  // 🌟 2. Mark as Done Manually 🌟
   const markAsDone = async (id: string) => {
     await supabase.from('orders').update({ status: 'done' }).eq('id', id);
     fetchOrders();
@@ -492,7 +490,6 @@ export default function AdminPanel() {
     }
   };
 
-  // 1-Click Refund System
   const refundOrder = async (order: any) => {
     if (!order.user_email) {
       alert("ဒီအော်ဒါက Email မပါတဲ့အတွက် Wallet ထဲ ငွေပြန်အမ်းလို့ မရပါ။");
@@ -545,7 +542,6 @@ export default function AdminPanel() {
     }
   };
 
-  // CSV Export Logic
   const downloadCSV = (data: any[], filename: string) => {
     if (data.length === 0) return alert("ထုတ်ယူစရာ ဒေတာမရှိပါ။");
     const headers = Object.keys(data[0]).join(',');
@@ -557,9 +553,6 @@ export default function AdminPanel() {
     link.click();
   };
 
-  // ----------------------------------------------------
-  // FILTERING & PAGINATION LOGIC 
-  // ----------------------------------------------------
   const filteredOrders = orders.filter(o => {
     const matchSearch = (o.user_email || '').toLowerCase().includes(orderSearch.toLowerCase()) || 
                         (o.player_id || '').toLowerCase().includes(orderSearch.toLowerCase()) ||
@@ -744,6 +737,12 @@ export default function AdminPanel() {
             Edit Prices
           </button>
 
+          {/* 🌟 New Calculator Tab Button 🌟 */}
+          <button onClick={() => setActiveTab('calculator')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'calculator' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            Profit Calculator
+          </button>
+
           <button onClick={() => setActiveTab('announcements')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'announcements' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
             Broadcast
@@ -764,7 +763,7 @@ export default function AdminPanel() {
         {/* Top Header */}
         <div className="h-20 flex items-center justify-between px-8 bg-transparent shrink-0">
            <h2 className="text-2xl font-black text-gray-800 capitalize tracking-tight">
-             {activeTab === 'mapping' ? 'Edit Game Prices' : activeTab === 'announcements' ? 'Broadcast Message' : activeTab}
+             {activeTab === 'mapping' ? 'Edit Game Prices' : activeTab === 'announcements' ? 'Broadcast Message' : activeTab === 'calculator' ? 'Profit Calculator' : activeTab}
            </h2>
            <div className="flex items-center gap-4">
               <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-indigo-600 transition-colors">
@@ -1164,6 +1163,108 @@ export default function AdminPanel() {
                     )}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* ================= TAB 6: PROFIT CALCULATOR (NEW) ================= */}
+          {activeTab === 'calculator' && (
+            <div className="bg-white rounded-[30px] p-6 md:p-8 shadow-sm border border-gray-100 min-h-full">
+              <div className="max-w-3xl mx-auto mt-4">
+                <div className="text-center mb-10">
+                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                  </div>
+                  <h3 className="text-2xl font-black text-gray-800 mb-2">Profit & Pricing Calculator</h3>
+                  <p className="text-gray-500 text-sm">ဈေးနှုန်းသတ်မှတ်ရန်အတွက် အရင်း၊ အမြတ်နှင့် အမြတ်ရာခိုင်နှုန်းကို ကြိုတင်တွက်ချက်ပါ။</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Inputs Section */}
+                  <div className="space-y-5 bg-gray-50 p-6 md:p-8 rounded-3xl border border-gray-100">
+                    <h4 className="font-bold text-gray-800 border-b pb-3">1. အချက်အလက်များ ထည့်ပါ</h4>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Exchange Rate (ငွေလဲနှုန်း)</label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">Ks</span>
+                        <input 
+                          type="number" 
+                          value={calcRate}
+                          onChange={(e) => setCalcRate(Number(e.target.value))}
+                          className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-indigo-700 text-lg font-black focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all shadow-sm"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Base Cost in USD (FazerCards ဈေး)</label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">$</span>
+                        <input 
+                          type="number" 
+                          value={calcUsd}
+                          onChange={(e) => setCalcUsd(e.target.value)}
+                          placeholder="e.g., 0.74"
+                          className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-gray-800 text-lg font-black focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all shadow-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Selling Price in MMK (ရောင်းမည့်ဈေး)</label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">Ks</span>
+                        <input 
+                          type="number" 
+                          value={calcSell}
+                          onChange={(e) => setCalcSell(e.target.value)}
+                          placeholder="e.g., 3500"
+                          className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-800 text-lg font-black focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all shadow-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  <div className="flex flex-col gap-4">
+                    {(() => {
+                      const costMmk = Number(calcUsd) * calcRate;
+                      const profit = Number(calcSell) - costMmk;
+                      const margin = Number(calcSell) > 0 ? (profit / Number(calcSell)) * 100 : 0;
+                      
+                      return (
+                        <>
+                          <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 flex items-center justify-between">
+                            <div>
+                              <p className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">Base Cost (အရင်း)</p>
+                              <p className="text-2xl font-black text-blue-700">{costMmk > 0 ? costMmk.toLocaleString(undefined, {maximumFractionDigits: 0}) : 0} <span className="text-sm">Ks</span></p>
+                            </div>
+                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 text-xl">📦</div>
+                          </div>
+
+                          <div className={`${profit > 0 ? 'bg-green-50 border-green-100' : profit < 0 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-100'} p-6 rounded-3xl border flex items-center justify-between flex-1`}>
+                            <div>
+                              <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${profit > 0 ? 'text-green-500' : profit < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                                Net Profit (အမြတ်ငွေ)
+                              </p>
+                              <p className={`text-3xl font-black ${profit > 0 ? 'text-green-700' : profit < 0 ? 'text-red-700' : 'text-gray-700'}`}>
+                                {profit > 0 ? '+' : ''}{profit !== 0 ? profit.toLocaleString(undefined, {maximumFractionDigits: 0}) : 0} <span className="text-sm">Ks</span>
+                              </p>
+                              {profit !== 0 && (
+                                <p className={`text-sm font-bold mt-2 ${profit > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                  Margin: {margin.toFixed(1)}%
+                                </p>
+                              )}
+                            </div>
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${profit > 0 ? 'bg-green-100 text-green-500' : profit < 0 ? 'bg-red-100 text-red-500' : 'bg-gray-200 text-gray-500'}`}>
+                               {profit > 0 ? '📈' : profit < 0 ? '📉' : '➖'}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
               </div>
             </div>
           )}
