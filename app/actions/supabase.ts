@@ -15,7 +15,15 @@ export async function savePricesToDb(allItems: any[]) {
     
     allItems.forEach(item => {
       // ID ကို Key အနေနဲ့သုံးပြီး Duplicate ဖြစ်နေရင် နောက်ဆုံးတစ်ခုကိုပဲ ယူပါမယ်
-      uniqueItemsMap.set(item.id, item);
+      // 🌟 အသစ်ထည့်ထားသော base_usd ကိုပါ Database ထဲ သိမ်းရန် ပြင်ဆင်ထားပါသည် 🌟
+      uniqueItemsMap.set(item.id, {
+        id: item.id,
+        category: item.category,
+        name: item.name,
+        bonus: item.bonus,
+        price: Number(item.price) || 0,
+        base_usd: Number(item.base_usd) || 0 
+      });
     });
 
     const uniqueItems = Array.from(uniqueItemsMap.values());
