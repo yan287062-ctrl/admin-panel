@@ -9,190 +9,305 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
-// 🌟 Packages အားလုံး (Base USD နေရာလွတ်ဖြင့် စတင်မည်) 🌟
+// 🌟 FazerCards ၏ Wholesale Base USD ဈေးနှုန်းများ (အတိအကျ) 🌟
 // ==========================================
-const attachBaseUsd = (arr: any[]) => arr.map(pkg => ({ ...pkg, bonus: pkg.bonus || 'No bonus', base_usd: 0 }));
 
 const initialGamePrices: Record<string, any[]> = {
-  mobile_legends_global: attachBaseUsd([
-    { id: 'mlbb_1', name: '55 Diamonds', price: 3461 }, { id: 'mlbb_2', name: '165 Diamonds', price: 10372 },
-    { id: 'mlbb_3', name: '275 Diamonds', price: 16636 }, { id: 'mlbb_4', name: '565 Diamonds', price: 34160 },
-    { id: 'mlbb_5', name: 'Weekly Pass', price: 6600 }, { id: 'mlbb_6', name: 'Weekly Pass x 2', price: 13200 },
-    { id: 'mlbb_7', name: 'Weekly Pass x 3', price: 19800 }, { id: 'mlbb_8', name: 'Weekly Pass x 4', price: 26400 },
-    { id: 'mlbb_9', name: 'Weekly Pass x 5', price: 33000 }, { id: 'mlbb_10', name: 'Twilight Pass', price: 35712 },
-    { id: 'mlbb_11', name: 'Weekly Elite Bundle', price: 3461 }, { id: 'mlbb_12', name: 'Monthly Epic Bundle', price: 17434 },
-    { id: 'mlbb_13', name: '86 Diamonds', price: 5457 }, { id: 'mlbb_14', name: '172 Diamonds', price: 10824 },
-    { id: 'mlbb_15', name: '257 Diamonds', price: 15678 }, { id: 'mlbb_16', name: '343 Diamonds', price: 21134 },
-    { id: 'mlbb_17', name: '429 Diamonds', price: 26502 }, { id: 'mlbb_18', name: '514 Diamonds', price: 31355 },
-    { id: 'mlbb_19', name: '600 Diamonds', price: 36812 }, { id: 'mlbb_20', name: '705 Diamonds', price: 42588 },
-    { id: 'mlbb_21', name: '792 Diamonds', price: 48045 }, { id: 'mlbb_22', name: '878 Diamonds', price: 53412 },
-    { id: 'mlbb_23', name: '963 Diamonds', price: 58266 }, { id: 'mlbb_24', name: '1049 Diamonds', price: 63722 },
-    { id: 'mlbb_25', name: '1135 Diamonds', price: 69090 }, { id: 'mlbb_26', name: '1220 Diamonds', price: 73943 },
-    { id: 'mlbb_27', name: '1412 Diamonds', price: 85176 }, { id: 'mlbb_28', name: '1584 Diamonds', price: 96000 },
-    { id: 'mlbb_29', name: '1669 Diamonds', price: 100854 }, { id: 'mlbb_30', name: '1755 Diamonds', price: 106310 },
-    { id: 'mlbb_31', name: '1841 Diamonds', price: 111678 }, { id: 'mlbb_32', name: '2195 Diamonds', price: 128918 },
-    { id: 'mlbb_33', name: '2538 Diamonds', price: 150052 }, { id: 'mlbb_34', name: '2901 Diamonds', price: 171506 },
-    { id: 'mlbb_35', name: '3073 Diamonds', price: 182330 }, { id: 'mlbb_36', name: '3688 Diamonds', price: 215069 },
-    { id: 'mlbb_37', name: '3945 Diamonds', price: 230747 }, { id: 'mlbb_38', name: '4031 Diamonds', price: 236204 },
-    { id: 'mlbb_39', name: '4566 Diamonds', price: 268482 }, { id: 'mlbb_40', name: '5100 Diamonds', price: 300245 },
-    { id: 'mlbb_41', name: '5532 Diamonds', price: 324734 }, { id: 'mlbb_42', name: '6055 Diamonds', price: 354812 },
-    { id: 'mlbb_43', name: '6752 Diamonds', price: 398677 }, { id: 'mlbb_44', name: '7030 Diamonds', price: 415366 },
-    { id: 'mlbb_45', name: '7727 Diamonds', price: 453651 }, { id: 'mlbb_46', name: '9288 Diamonds', price: 539360 }
-  ]),
-  mobile_legends_brazil: attachBaseUsd([
-    { id: '50_5_diamonds_first_top_up_bonus', name: '55 Diamonds', price: 3500 }, { id: '78_8_diamonds', name: '86 Diamonds', price: 5500 },
-    { id: 'weekly_pass', name: 'Weekly Pass', price: 6600 }, { id: '156_16_diamonds', name: '172 Diamonds', price: 10800 },
-    { id: '150_15_diamonds_first_top_up_bonus', name: '165 Diamonds', price: 10400 }, { id: '234_23_diamonds', name: '257 Diamonds', price: 16100 },
-    { id: '310_34_diamonds', name: '344 Diamonds', price: 21500 }, { id: '250_25_diamonds_first_top_up_bonus', name: '275 Diamonds', price: 17000 },
-    { id: '482_diamonds', name: '482 Diamonds', price: 30000 }, { id: '465_51_diamonds', name: '516 Diamonds', price: 26300 },
-    { id: '500_65_diamonds_first_top_up_bonus', name: '565 Diamonds', price: 34100 }, { id: 'twilight_pass', name: 'Twilight Pass', price: 35700 },
-    { id: '625_81_diamonds', name: '706 Diamonds', price: 43000 }, { id: '1860_335_diamonds', name: '2195 Diamonds', price: 128900 },
-    { id: '3099_589_diamonds', name: '3688 Diamonds', price: 215000 }, { id: '4649_883_diamonds', name: '5532 Diamonds', price: 324700 },
-    { id: '7740_1548_diamonds', name: '9288 Diamonds', price: 539300 }
-  ]),
-  mobile_legends_philippines: attachBaseUsd([
-    { id: '10_1_diamonds', name: '11 Diamonds', price: 900 }, { id: '20_2_diamonds', name: '22 Diamonds', price: 1800 },
-    { id: '51_5_diamonds', name: '56 Diamonds', price: 4300 }, { id: '50_5_diamonds_first_top_up_bonus', name: '55 Diamonds', price: 4200 },
-    { id: 'weekly_diamond_pass', name: 'Weekly Diamond Pass', price: 8800 }, { id: '102_10_diamonds', name: '112 Diamonds', price: 8500 },
-    { id: '153_15_diamonds', name: '168 Diamonds', price: 13500 }, { id: '203_20_diamonds', name: '223 Diamonds', price: 17000 },
-    { id: '150_15_diamonds_first_top_up_bonus', name: '165 Diamonds', price: 12500 }, { id: '303_33_diamonds', name: '336 Diamonds', price: 25500 },
-    { id: '250_25_diamonds_first_top_up_bonus', name: '275 Diamonds', price: 21500 }, { id: 'twilight_pass', name: 'Twilight Pass', price: 43500 },
-    { id: '504_66_diamonds', name: '570 Diamonds', price: 42000 }, { id: '500_65_diamonds_first_top_up_bonus', name: '565 Diamonds', price: 43000 },
-    { id: '1007_156_diamonds', name: '1163 Diamonds', price: 84000 }, { id: '2015_383_diamonds', name: '2398 Diamonds', price: 169000 },
-    { id: '5035_1007_diamonds', name: '6042 Diamonds', price: 420000 }
-  ]),
-  magic_chess_gogo_global: attachBaseUsd([
-    { id: '11_diamonds', name: '11 Diamonds', price: 900 }, { id: '22_diamonds', name: '22 Diamonds', price: 1700 },
-    { id: '56_diamonds', name: '56 Diamonds', price: 4200 }, { id: 'first_recharge_100_50_50_bonus', name: 'First Recharge 100 (50+50)', price: 4400 },
-    { id: '112_diamonds', name: '112 Diamonds', price: 8300 }, { id: 'weekly_card', name: 'Weekly Card', price: 8800 },
-    { id: 'first_recharge_300_150_150_bonus', name: 'First Recharge 300 (150+150)', price: 13000 }, { id: '223_diamonds', name: '223 Diamonds', price: 16600 },
-    { id: 'first_recharge_500_250_250_bonus', name: 'First Recharge 500 (250+250)', price: 21500 }, { id: '336_diamonds', name: '336 Diamonds', price: 24900 },
-    { id: '570_diamonds', name: '570 Diamonds', price: 41400 }, { id: 'first_recharge_1000_500_500_bonus', name: 'First Recharge 1000 (500+500)', price: 43400 },
-    { id: '1163_diamonds', name: '1163 Diamonds', price: 82900 }, { id: '2398_diamonds', name: '2398 Diamonds', price: 165700 },
-    { id: '6042_diamonds', name: '6042 Diamonds', price: 414100 }
-  ]),
-  pubg_mobile_manual: attachBaseUsd([
-    { id: '60_uc', name: '60 UC', price: 4106 }, { id: '325_uc', name: '325 UC', price: 20529 },
-    { id: '660_uc', name: '660 UC', price: 41059 }, { id: '1800_uc', name: '1800 UC', price: 100000 },
-    { id: '3850_uc', name: '3850 UC', price: 200000 }, { id: '8100_uc', name: '8100 UC', price: 400000 }
-  ]),
-  ucPack: attachBaseUsd([
-    { id: 'ucp_1', name: 'First Purchase Pack', price: 4100 }, { id: 'ucp_2', name: 'Prime (1 Month)', price: 4100 },
-    { id: 'ucp_3', name: 'Weekly Deal Pack 1', price: 4200 }, { id: 'ucp_4', name: 'Upgradable Firearm Materials Pack', price: 12300 },
-    { id: 'ucp_5', name: 'Prime (3 Months)', price: 12300 }, { id: 'ucp_6', name: 'Weekly Mythic Emblem Value Pack', price: 12400 },
-    { id: 'ucp_7', name: 'Weekly Deal Pack 2', price: 12400 }, { id: 'ucp_8', name: 'Mythic Emblem Pack', price: 20400 },
-    { id: 'ucp_9', name: 'Prime (6 Months)', price: 24400 }, { id: 'ucp_10', name: 'Elite Pass LV1-50', price: 24800 },
-    { id: 'ucp_11', name: 'Prime Plus (1 Month)', price: 40700 }, { id: 'ucp_12', name: 'Prime (12 Months)', price: 48800 },
-    { id: 'ucp_13', name: 'Elite Pass LV1-100', price: 49700 }, { id: 'ucp_14', name: 'Prime Plus (3 Months)', price: 122000 },
-    { id: 'ucp_15', name: 'Elite Pass Plus LV1-100', price: 123100 }, { id: 'ucp_16', name: 'Prime Plus (6 Months)', price: 243900 },
-    { id: 'ucp_17', name: 'Prime Plus (12 Months)', price: 487800 }
-  ]),
-  telegram: attachBaseUsd([
-    { id: 'tg_1', name: '50 Stars', price: 3552 }, { id: 'tg_2', name: '75 Stars', price: 5306 },
-    { id: 'tg_3', name: '100 Stars', price: 7058 }, { id: 'tg_4', name: '150 Stars', price: 10587 },
-    { id: 'tg_5', name: '250 Stars', price: 17645 }, { id: 'tg_6', name: '350 Stars', price: 24703 },
-    { id: 'tg_7', name: '500 Stars', price: 35291 }, { id: 'tg_8', name: '750 Stars', price: 52936 },
-    { id: 'tg_9', name: '1K Stars', price: 70582 }, { id: 'tg_10', name: '1.5K Stars', price: 105873 },
-    { id: 'tg_11', name: '2.5K Stars', price: 176454 }, { id: 'tg_12', name: '5K Stars', price: 352908 },
-    { id: 'tg_13', name: '10K Stars', price: 705816 }, { id: 'tg_14', name: '3 months premium', price: 56420 },
-    { id: 'tg_15', name: '6 months premium', price: 75241 }, { id: 'tg_16', name: '12 months premium', price: 136412 }
-  ]),
-  heartopia: attachBaseUsd([
-    { id: '20_heart_diamond', name: '20 Heart Diamond', price: 2500 }, { id: '60_heart_diamond', name: '60 Heart Diamond', price: 4800 },
-    { id: 'gamg_formal_membership', name: 'GAMG Formal Membership', price: 15000 }, { id: '320_heart_diamond', name: '320 Heart Diamond', price: 24500 }, 
-    { id: 'festival_pack', name: 'Festival Pack', price: 24500 }, { id: 'festival_pack_upgrade', name: 'Festival Pack Upgrade', price: 31000 },
-    { id: '730_heart_diamond', name: '730 Heart Diamond', price: 55000 }, { id: 'supreme_festival_pack', name: 'Supreme Festival Pack', price: 55000 },
-    { id: '1370_heart_diamond', name: '1370 Heart Diamond', price: 100000 }, { id: '2130_heart_diamond', name: '2130 Heart Diamond', price: 155000 },
-    { id: '3550_heart_diamond', name: '3550 Heart Diamond', price: 250000 }, { id: '7050_heart_diamond', name: '7050 Heart Diamond', price: 500000 }
-  ]),
-  eafc_mobile_id: attachBaseUsd([
-    { id: '40_fc_points', name: '40 FC Points', price: 1500 }, { id: '100_fc_points', name: '100 FC Points', price: 3800 },
-    { id: '520_fc_points', name: '520 FC Points', price: 18700 }, { id: '1070_fc_points', name: '1070 FC Points', price: 37600 },
-    { id: '2200_fc_points', name: '2200 FC Points', price: 77900 }, { id: '5750_fc_points', name: '5750 FC Points', price: 189300 },
-    { id: '12000_fc_points', name: '12000 FC Points', price: 378900 }
-  ]),
-  eafc_mobile_my: attachBaseUsd([
-    { id: '40_fc_points', name: '40 FC Points', price: 2100 }, { id: '100_fc_points', name: '100 FC Points', price: 5200 },
-    { id: '520_fc_points', name: '520 FC Points', price: 25400 }, { id: '1070_fc_points', name: '1070 FC Points', price: 47800 },
-    { id: '2200_fc_points', name: '2200 FC Points', price: 101100 }, { id: '5750_fc_points', name: '5750 FC Points', price: 255700 },
-    { id: '12000_fc_points', name: '12000 FC Points', price: 511600 }
-  ]),
-  genshin_impact_login: attachBaseUsd([
-    { id: '60', name: '60 Genesis Crystals', price: 3600 }, { id: 'blessing_of_the_welkin_moon', name: 'Blessing of the Welkin Moon', price: 18400 },
-    { id: '330', name: '300 + 30 Genesis Crystals', price: 18400 }, { id: 'gnostic_hymn', name: 'Gnostic Hymn', price: 37000 },
-    { id: '1090', name: '980 + 110 Genesis Crystals', price: 54800 }, { id: 'gnostic_chorus', name: 'Gnostic Chorus', price: 73300 },
-    { id: '2240', name: '1980 + 260 Genesis Crystals', price: 110400 }, { id: '3880', name: '3280 + 600 Genesis Crystals', price: 185000 },
-    { id: '8080', name: '6480 + 1600 Genesis Crystals', price: 363500 }
-  ]),
-  genshin_impact_global: attachBaseUsd([
-    { id: '60_genesis_crystals', name: '60 Genesis Crystals', price: 4500 }, { id: 'blessing_of_the_welkin_moon', name: 'Blessing of the Welkin Moon', price: 22600 },
-    { id: '300_30_genesis_crystals', name: '300 + 30 Genesis Crystals', price: 22600 }, { id: '980_110_genesis_crystals', name: '980 + 110 Genesis Crystals', price: 67800 },
-    { id: '1980_260_genesis_crystals', name: '1980 + 260 Genesis Crystals', price: 135600 }, { id: '3280_600_genesis_crystals', name: '3280 + 600 Genesis Crystals', price: 226000 },
-    { id: '6480_1600_genesis_crystals', name: '6480 + 1600 Genesis Crystals', price: 452000 }
-  ]),
-  capcut: attachBaseUsd([
-    { id: '1_month_eu_standard', name: '1 Month (EU) Standard', price: 38500 }, { id: '1_month_uk_standard', name: '1 Month (UK) Standard', price: 27500 },
-    { id: '1_month_us_standard', name: '1 Month (US) Standard', price: 74200 }, { id: '1_month_eu_pro', name: '1 Month (EU) Pro', price: 79700 },
-    { id: '1_month_uk_pro', name: '1 Month (UK) Pro', price: 79700 }, { id: '1_month_us_pro', name: '1 Month (US) Pro', price: 55000 }
-  ]),
-  discord_global: attachBaseUsd([
-    { id: 'discord_basic_1_month_subscription', name: 'Discord Basic: 1 Month', price: 20000 },
-    { id: 'discord_nitro_1_month_subscription', name: 'Discord Nitro: 1 Month', price: 40000 },
-    { id: 'discord_nitro_12_months_subscription', name: 'Discord Nitro: 12 Months', price: 400000 }
-  ]),
-  app_store_itunes_us: attachBaseUsd([
-    { id: '2_usd', name: '2 USD', price: 10000 }, { id: '3_usd', name: '3 USD', price: 15000 },
-    { id: '5_usd', name: '5 USD', price: 25000 }, { id: '10_usd', name: '10 USD', price: 47000 },
-    { id: '15_usd', name: '15 USD', price: 70000 }, { id: '20_usd', name: '20 USD', price: 94000 },
-    { id: '50_usd', name: '50 USD', price: 235000 }, { id: '100_usd', name: '100 USD', price: 470000 }
-  ]),
-  netflix_us: attachBaseUsd([
-    { id: '15_usd', name: '15 USD', price: 63000 }, { id: '20_usd', name: '20 USD', price: 84000 },
-    { id: '25_usd', name: '25 USD', price: 107500 }, { id: '30_usd', name: '30 USD', price: 126500 },
-    { id: '50_usd', name: '50 USD', price: 211000 }, { id: '100_usd', name: '100 USD', price: 437500 }
-  ]),
-  roblox_global: attachBaseUsd([
-    { id: '50_robux', name: '50 Robux', price: 4000 }, { id: '100_robux', name: '100 Robux', price: 6500 },
-    { id: '800_robux', name: '800 Robux', price: 40300 }, { id: '1000_robux', name: '1000 Robux', price: 50000 },
-    { id: '2000_robux', name: '2000 Robux', price: 99000 }, { id: '4500_robux', name: '4500 Robux', price: 213800 },
-    { id: '10000_robux', name: '10000 Robux', price: 438800 }
-  ]),
-  roblox_id: attachBaseUsd([
-    { id: '50000_idr', name: '50000 IDR', price: 11500 }, { id: '100000_idr', name: '100000 IDR', price: 23000 },
-    { id: '300000_idr', name: '300000 IDR', price: 75000 }, { id: '500000_idr', name: '500000 IDR', price: 124000 }
-  ]),
-  roblox_robux_us: attachBaseUsd([
-    { id: '50_robux', name: '50 Robux', price: 4000 }, { id: '100_robux', name: '100 Robux', price: 7600 },
-    { id: '555_robux', name: '555 Robux', price: 23000 }, { id: '1000_robux', name: '1000 Robux', price: 40500 },
-    { id: '2500_robux', name: '2500 Robux', price: 105500 }, { id: '11000_robux', name: '11000 Robux', price: 420500 }
-  ]),
-  minecraft_minecoins: attachBaseUsd([
-    { id: '330_minecoins', name: '330 Minecoins', price: 18600 }, { id: '1720_minecoins', name: '1720 Minecoins', price: 36500 },
-    { id: '3500_minecoins', name: '3500 Minecoins', price: 50800 }, { id: '8800_minecoins', name: '8800 Minecoins', price: 200800 }
-  ]),
-  smileCoin: attachBaseUsd([
-    { id: 'smile_1', name: 'Brl 300', price: 25800 }, { id: 'smile_2', name: 'Brl 1000', price: 83800 },
-    { id: 'smile_3', name: 'Brl 5000', price: 419000 }
-  ]),
-  aniimo: attachBaseUsd([
-    { id: 'an1', name: '60 Stars', price: 3900 }, { id: 'an2', name: '300 Stars', price: 23000 },
-    { id: 'an3', name: '980 Stars', price: 67100 }, { id: 'an4', name: '1980 Stars', price: 134100 },
-    { id: 'an5', name: '3280 Stars', price: 227400 }, { id: 'an6', name: '6480 Stars', price: 439000 },
-  ]),
-  spotify: attachBaseUsd([
-    { id: 'sp1', name: '1m - Individual', bonus: 'Individual Plan', price: 8500 }, { id: 'sp2', name: '3m - Individual', bonus: 'Individual Plan', price: 33000 },
-    { id: 'sp3', name: '6m - Individual', bonus: 'Individual Plan', price: 52000 }, { id: 'sp4', name: '12m - Individual', bonus: 'Individual Plan', price: 78000 },
-    { id: 'sp5', name: '2m - Family', bonus: 'Family plan', price: 12000 }, { id: 'sp6', name: '3m - Family', bonus: 'Family plan', price: 16000 },
-    { id: 'sp7', name: '6m - Family', bonus: 'Family plan', price: 29000 }, { id: 'sp8', name: '1yr - Family', bonus: 'Family plan', price: 50000 },
-  ]),
-  jumpjump: attachBaseUsd([
-    { id: 'jv1', name: '1 Month - 1 Device (Share)', bonus: 'Share', price: 10000 }, { id: 'jv2', name: '1 Month - 1 Device (Own)', bonus: 'Own', price: 14500 },
-    { id: 'jv3', name: '1 Month - 2 Device (Own)', bonus: 'Own', price: 19000 }, { id: 'jv4', name: '6 Month - 2 Device (Own)', bonus: 'Own', price: 95000 },
-    { id: 'jv5', name: '12 Month - 2 Device (Own)', bonus: 'Own', price: 123000 },
-  ]),
-  expressvpn: attachBaseUsd([
-    { id: 'ev1', name: '1 Month - 1 Device', bonus: '1 Device', price: 2000 }, { id: 'ev2', name: '1 Month - 12 Device', bonus: '12 Device', price: 12000 },
-  ]),
+  mobile_legends_global: [
+    { id: 'mlbb_1', name: '55 Diamonds', price: 3461, bonus: 'No bonus', base_usd: 0.72 },
+    { id: 'mlbb_2', name: '165 Diamonds', price: 10372, bonus: 'No bonus', base_usd: 2.19 },
+    { id: 'mlbb_3', name: '275 Diamonds', price: 16636, bonus: 'No bonus', base_usd: 3.71 },
+    { id: 'mlbb_4', name: '565 Diamonds', price: 34160, bonus: 'No bonus', base_usd: 7.44 },
+    { id: 'mlbb_5', name: 'Weekly Pass', price: 6600, bonus: 'No bonus', base_usd: 1.28 },
+    { id: 'mlbb_6', name: 'Weekly Pass x 2', price: 13200, bonus: 'No bonus', base_usd: 2.56 },
+    { id: 'mlbb_7', name: 'Weekly Pass x 3', price: 19800, bonus: 'No bonus', base_usd: 3.84 },
+    { id: 'mlbb_8', name: 'Weekly Pass x 4', price: 26400, bonus: 'No bonus', base_usd: 5.12 },
+    { id: 'mlbb_9', name: 'Weekly Pass x 5', price: 33000, bonus: 'No bonus', base_usd: 6.40 },
+    { id: 'mlbb_10', name: 'Twilight Pass', price: 35712, bonus: 'No bonus', base_usd: 7.69 },
+    { id: 'mlbb_11', name: 'Weekly Elite Bundle', price: 3461, bonus: 'No bonus', base_usd: 0.75 },
+    { id: 'mlbb_12', name: 'Monthly Epic Bundle', price: 17434, bonus: 'No bonus', base_usd: 3.70 },
+    { id: 'mlbb_13', name: '86 Diamonds', price: 5457, bonus: 'No bonus', base_usd: 1.02 },
+    { id: 'mlbb_14', name: '172 Diamonds', price: 10824, bonus: 'No bonus', base_usd: 2.04 },
+    { id: 'mlbb_15', name: '257 Diamonds', price: 15678, bonus: 'No bonus', base_usd: 3.05 },
+    { id: 'mlbb_16', name: '343 Diamonds', price: 21134, bonus: 'No bonus', base_usd: 4.63 },
+    { id: 'mlbb_17', name: '429 Diamonds', price: 26502, bonus: 'No bonus', base_usd: 7.09 },
+    { id: 'mlbb_18', name: '514 Diamonds', price: 31355, bonus: 'No bonus', base_usd: 7.72 },
+    { id: 'mlbb_19', name: '600 Diamonds', price: 36812, bonus: 'No bonus', base_usd: 8.15 },
+    { id: 'mlbb_20', name: '705 Diamonds', price: 42588, bonus: 'No bonus', base_usd: 8.79 },
+    { id: 'mlbb_21', name: '792 Diamonds', price: 48045, bonus: 'No bonus', base_usd: 11.81 },
+    { id: 'mlbb_22', name: '878 Diamonds', price: 53412, bonus: 'No bonus', base_usd: 15.43 },
+    { id: 'mlbb_23', name: '963 Diamonds', price: 58266, bonus: 'No bonus', base_usd: 17.76 },
+    { id: 'mlbb_24', name: '1049 Diamonds', price: 63722, bonus: 'No bonus', base_usd: 23.55 },
+    { id: 'mlbb_25', name: '1135 Diamonds', price: 69090, bonus: 'No bonus', base_usd: 24.45 },
+    { id: 'mlbb_26', name: '1220 Diamonds', price: 73943, bonus: 'No bonus', base_usd: 26.60 },
+    { id: 'mlbb_27', name: '1412 Diamonds', price: 85176, bonus: 'No bonus', base_usd: 30.87 },
+    { id: 'mlbb_28', name: '1584 Diamonds', price: 96000, bonus: 'No bonus', base_usd: 40.76 },
+    { id: 'mlbb_29', name: '1669 Diamonds', price: 100854, bonus: 'No bonus', base_usd: 44.37 },
+    { id: 'mlbb_30', name: '1755 Diamonds', price: 106310, bonus: 'No bonus', base_usd: 47.24 },
+    { id: 'mlbb_31', name: '1841 Diamonds', price: 111678, bonus: 'No bonus', base_usd: 61.14 },
+    { id: 'mlbb_32', name: '2195 Diamonds', price: 128918, bonus: 'No bonus', base_usd: 66.99 },
+    { id: 'mlbb_33', name: '2538 Diamonds', price: 150052, bonus: 'No bonus', base_usd: 77.17 },
+    { id: 'mlbb_34', name: '2901 Diamonds', price: 171506, bonus: 'No bonus', base_usd: 101.90 },
+    { id: 'mlbb_35', name: '3073 Diamonds', price: 182330, bonus: 'No bonus', base_usd: 111.28 },
+    { id: 'mlbb_36', name: '3688 Diamonds', price: 215069, bonus: 'No bonus', base_usd: 117.90 },
+    { id: 'mlbb_37', name: '3945 Diamonds', price: 230747, bonus: 'No bonus', base_usd: 126.69 }, // Est
+    { id: 'mlbb_38', name: '4031 Diamonds', price: 236204, bonus: 'No bonus', base_usd: 129.68 }, // Est
+    { id: 'mlbb_39', name: '4566 Diamonds', price: 268482, bonus: 'No bonus', base_usd: 147.41 }, // Est
+    { id: 'mlbb_40', name: '5100 Diamonds', price: 300245, bonus: 'No bonus', base_usd: 164.84 }, // Est
+    { id: 'mlbb_41', name: '5532 Diamonds', price: 324734, bonus: 'No bonus', base_usd: 178.29 }, // Est
+    { id: 'mlbb_42', name: '6055 Diamonds', price: 354812, bonus: 'No bonus', base_usd: 194.81 }, // Est
+    { id: 'mlbb_43', name: '6752 Diamonds', price: 398677, bonus: 'No bonus', base_usd: 218.89 }, // Est
+    { id: 'mlbb_44', name: '7030 Diamonds', price: 415366, bonus: 'No bonus', base_usd: 228.05 }, // Est
+    { id: 'mlbb_45', name: '7727 Diamonds', price: 453651, bonus: 'No bonus', base_usd: 249.07 }, // Est
+    { id: 'mlbb_46', name: '9288 Diamonds', price: 539360, bonus: 'No bonus', base_usd: 296.13 }  // Est
+  ],
+  mobile_legends_brazil: [
+    { id: '50_5_diamonds_first_top_up_bonus', name: '55 Diamonds', price: 3500, bonus: 'No bonus', base_usd: 0.72 }, 
+    { id: '78_8_diamonds', name: '86 Diamonds', price: 5500, bonus: 'No bonus', base_usd: 1.02 },
+    { id: 'weekly_pass', name: 'Weekly Pass', price: 6600, bonus: 'No bonus', base_usd: 1.28 }, 
+    { id: '156_16_diamonds', name: '172 Diamonds', price: 10800, bonus: 'No bonus', base_usd: 2.04 },
+    { id: '150_15_diamonds_first_top_up_bonus', name: '165 Diamonds', price: 10400, bonus: 'No bonus', base_usd: 2.22 }, 
+    { id: '234_23_diamonds', name: '257 Diamonds', price: 16100, bonus: 'No bonus', base_usd: 3.05 },
+    { id: '310_34_diamonds', name: '344 Diamonds', price: 21500, bonus: 'No bonus', base_usd: 4.63 }, 
+    { id: '250_25_diamonds_first_top_up_bonus', name: '275 Diamonds', price: 17000, bonus: 'No bonus', base_usd: 3.71 },
+    { id: '482_diamonds', name: '482 Diamonds', price: 30000, bonus: 'No bonus', base_usd: 7.09 }, 
+    { id: '465_51_diamonds', name: '516 Diamonds', price: 26300, bonus: 'No bonus', base_usd: 7.72 },
+    { id: '500_65_diamonds_first_top_up_bonus', name: '565 Diamonds', price: 34100, bonus: 'No bonus', base_usd: 7.44 }, 
+    { id: 'twilight_pass', name: 'Twilight Pass', price: 35700, bonus: 'No bonus', base_usd: 7.69 },
+    { id: '625_81_diamonds', name: '706 Diamonds', price: 43000, bonus: 'No bonus', base_usd: 8.79 }, 
+    { id: '1860_335_diamonds', name: '2195 Diamonds', price: 128900, bonus: 'No bonus', base_usd: 26.60 },
+    { id: '3099_589_diamonds', name: '3688 Diamonds', price: 215000, bonus: 'No bonus', base_usd: 44.37 }, 
+    { id: '4649_883_diamonds', name: '5532 Diamonds', price: 324700, bonus: 'No bonus', base_usd: 66.99 },
+    { id: '7740_1548_diamonds', name: '9288 Diamonds', price: 539300, bonus: 'No bonus', base_usd: 111.28 }
+  ],
+  mobile_legends_philippines: [
+    { id: '10_1_diamonds', name: '11 Diamonds', price: 900, bonus: 'No bonus', base_usd: 0.16 }, 
+    { id: '20_2_diamonds', name: '22 Diamonds', price: 1800, bonus: 'No bonus', base_usd: 0.31 },
+    { id: '51_5_diamonds', name: '56 Diamonds', price: 4300, bonus: 'No bonus', base_usd: 0.77 }, 
+    { id: '50_5_diamonds_first_top_up_bonus', name: '55 Diamonds', price: 4200, bonus: 'No bonus', base_usd: 0.73 },
+    { id: 'weekly_diamond_pass', name: 'Weekly Diamond Pass', price: 8800, bonus: 'No bonus', base_usd: 1.28 }, 
+    { id: '102_10_diamonds', name: '112 Diamonds', price: 8500, bonus: 'No bonus', base_usd: 1.54 },
+    { id: '153_15_diamonds', name: '168 Diamonds', price: 13500, bonus: 'No bonus', base_usd: 2.16 }, 
+    { id: '203_20_diamonds', name: '223 Diamonds', price: 17000, bonus: 'No bonus', base_usd: 3.09 },
+    { id: '150_15_diamonds_first_top_up_bonus', name: '165 Diamonds', price: 12500, bonus: 'No bonus', base_usd: 2.22 }, 
+    { id: '303_33_diamonds', name: '336 Diamonds', price: 25500, bonus: 'No bonus', base_usd: 4.63 },
+    { id: '250_25_diamonds_first_top_up_bonus', name: '275 Diamonds', price: 21500, bonus: 'No bonus', base_usd: 3.71 }, 
+    { id: 'twilight_pass', name: 'Twilight Pass', price: 43500, bonus: 'No bonus', base_usd: 7.69 },
+    { id: '504_66_diamonds', name: '570 Diamonds', price: 42000, bonus: 'No bonus', base_usd: 7.72 }, 
+    { id: '500_65_diamonds_first_top_up_bonus', name: '565 Diamonds', price: 43000, bonus: 'No bonus', base_usd: 7.44 },
+    { id: '1007_156_diamonds', name: '1163 Diamonds', price: 84000, bonus: 'No bonus', base_usd: 15.43 }, 
+    { id: '2015_383_diamonds', name: '2398 Diamonds', price: 169000, bonus: 'No bonus', base_usd: 30.87 },
+    { id: '5035_1007_diamonds', name: '6042 Diamonds', price: 420000, bonus: 'No bonus', base_usd: 77.17 }
+  ],
+  pubg_mobile_manual: [
+    { id: '60_uc', name: '60 UC', price: 4106, bonus: 'No bonus', base_usd: 0.86 }, 
+    { id: '325_uc', name: '325 UC', price: 20529, bonus: 'No bonus', base_usd: 4.26 },
+    { id: '660_uc', name: '660 UC', price: 41059, bonus: 'No bonus', base_usd: 8.43 }, 
+    { id: '1800_uc', name: '1800 UC', price: 100000, bonus: 'No bonus', base_usd: 20.78 },
+    { id: '3850_uc', name: '3850 UC', price: 200000, bonus: 'No bonus', base_usd: 41.94 }, 
+    { id: '8100_uc', name: '8100 UC', price: 400000, bonus: 'No bonus', base_usd: 83.30 }
+  ],
+  ucPack: [
+    { id: 'ucp_1', name: 'First Purchase Pack', price: 4100, bonus: 'No bonus', base_usd: 0.82 }, 
+    { id: 'ucp_2', name: 'Prime (1 Month)', price: 4100, bonus: 'No bonus', base_usd: 0.82 },
+    { id: 'ucp_3', name: 'Weekly Deal Pack 1', price: 4200, bonus: 'No bonus', base_usd: 0.84 }, 
+    { id: 'ucp_4', name: 'Upgradable Firearm Materials Pack', price: 12300, bonus: 'No bonus', base_usd: 2.48 },
+    { id: 'ucp_5', name: 'Prime (3 Months)', price: 12300, bonus: 'No bonus', base_usd: 2.48 }, 
+    { id: 'ucp_6', name: 'Weekly Mythic Emblem Value Pack', price: 12400, bonus: 'No bonus', base_usd: 2.54 },
+    { id: 'ucp_7', name: 'Weekly Deal Pack 2', price: 12400, bonus: 'No bonus', base_usd: 2.54 }, 
+    { id: 'ucp_8', name: 'Mythic Emblem Pack', price: 20400, bonus: 'No bonus', base_usd: 4.13 },
+    { id: 'ucp_9', name: 'Prime (6 Months)', price: 24400, bonus: 'No bonus', base_usd: 4.95 }, 
+    { id: 'ucp_10', name: 'Elite Pass LV1-50', price: 24800, bonus: 'No bonus', base_usd: 5.10 },
+    { id: 'ucp_11', name: 'Prime Plus (1 Month)', price: 40700, bonus: 'No bonus', base_usd: 8.24 }, 
+    { id: 'ucp_12', name: 'Prime (12 Months)', price: 48800, bonus: 'No bonus', base_usd: 9.90 },
+    { id: 'ucp_13', name: 'Elite Pass LV1-100', price: 49700, bonus: 'No bonus', base_usd: 10.18 }, 
+    { id: 'ucp_14', name: 'Prime Plus (3 Months)', price: 122000, bonus: 'No bonus', base_usd: 24.75 },
+    { id: 'ucp_15', name: 'Elite Pass Plus LV1-100', price: 123100, bonus: 'No bonus', base_usd: 25.47 }, 
+    { id: 'ucp_16', name: 'Prime Plus (6 Months)', price: 243900, bonus: 'No bonus', base_usd: 49.49 },
+    { id: 'ucp_17', name: 'Prime Plus (12 Months)', price: 487800, bonus: 'No bonus', base_usd: 98.97 }
+  ],
+  telegram: [
+    { id: 'tg_1', name: '50 Stars', price: 3552, bonus: 'No bonus', base_usd: 0.75 }, 
+    { id: 'tg_2', name: '75 Stars', price: 5306, bonus: 'No bonus', base_usd: 1.13 },
+    { id: 'tg_3', name: '100 Stars', price: 7058, bonus: 'No bonus', base_usd: 1.50 }, 
+    { id: 'tg_4', name: '150 Stars', price: 10587, bonus: 'No bonus', base_usd: 2.25 },
+    { id: 'tg_5', name: '250 Stars', price: 17645, bonus: 'No bonus', base_usd: 3.75 }, 
+    { id: 'tg_6', name: '350 Stars', price: 24703, bonus: 'No bonus', base_usd: 5.25 },
+    { id: 'tg_7', name: '500 Stars', price: 35291, bonus: 'No bonus', base_usd: 7.50 }, 
+    { id: 'tg_8', name: '750 Stars', price: 52936, bonus: 'No bonus', base_usd: 11.25 },
+    { id: 'tg_9', name: '1K Stars', price: 70582, bonus: 'No bonus', base_usd: 15.00 }, 
+    { id: 'tg_10', name: '1.5K Stars', price: 105873, bonus: 'No bonus', base_usd: 22.50 },
+    { id: 'tg_11', name: '2.5K Stars', price: 176454, bonus: 'No bonus', base_usd: 37.50 }, 
+    { id: 'tg_12', name: '5K Stars', price: 352908, bonus: 'No bonus', base_usd: 75.00 },
+    { id: 'tg_13', name: '10K Stars', price: 705816, bonus: 'No bonus', base_usd: 150.00 }, 
+    { id: 'tg_14', name: '3 months premium', price: 56420, bonus: 'No bonus', base_usd: 12.00 },
+    { id: 'tg_15', name: '6 months premium', price: 75241, bonus: 'No bonus', base_usd: 22.00 }, 
+    { id: 'tg_16', name: '12 months premium', price: 136412, bonus: 'No bonus', base_usd: 40.00 }
+  ],
+  app_store_itunes_us: [
+    { id: '2_usd', name: '2 USD', price: 10000, bonus: 'No bonus', base_usd: 2.20 }, 
+    { id: '3_usd', name: '3 USD', price: 15000, bonus: 'No bonus', base_usd: 3.30 },
+    { id: '5_usd', name: '5 USD', price: 25000, bonus: 'No bonus', base_usd: 5.50 }, 
+    { id: '10_usd', name: '10 USD', price: 47000, bonus: 'No bonus', base_usd: 10.35 },
+    { id: '15_usd', name: '15 USD', price: 70000, bonus: 'No bonus', base_usd: 15.55 }, 
+    { id: '20_usd', name: '20 USD', price: 94000, bonus: 'No bonus', base_usd: 20.70 },
+    { id: '50_usd', name: '50 USD', price: 235000, bonus: 'No bonus', base_usd: 51.75 }, 
+    { id: '100_usd', name: '100 USD', price: 470000, bonus: 'No bonus', base_usd: 103.50 }
+  ],
+  netflix_us: [
+    { id: '15_usd', name: '15 USD', price: 63000, bonus: 'No bonus', base_usd: 14.21 }, 
+    { id: '20_usd', name: '20 USD', price: 84000, bonus: 'No bonus', base_usd: 18.55 },
+    { id: '25_usd', name: '25 USD', price: 107500, bonus: 'No bonus', base_usd: 23.28 }, 
+    { id: '30_usd', name: '30 USD', price: 126500, bonus: 'No bonus', base_usd: 27.84 },
+    { id: '50_usd', name: '50 USD', price: 211000, bonus: 'No bonus', base_usd: 45.86 }, 
+    { id: '100_usd', name: '100 USD', price: 437500, bonus: 'No bonus', base_usd: 93.55 }
+  ],
+  roblox_global: [
+    { id: '50_robux', name: '50 Robux', price: 4000, bonus: 'No bonus', base_usd: 0.87 }, 
+    { id: '100_robux', name: '100 Robux', price: 6500, bonus: 'No bonus', base_usd: 1.43 },
+    { id: '800_robux', name: '800 Robux', price: 40300, bonus: 'No bonus', base_usd: 8.94 }, 
+    { id: '1000_robux', name: '1000 Robux', price: 50000, bonus: 'No bonus', base_usd: 11.11 },
+    { id: '2000_robux', name: '2000 Robux', price: 99000, bonus: 'No bonus', base_usd: 22.00 }, 
+    { id: '4500_robux', name: '4500 Robux', price: 213800, bonus: 'No bonus', base_usd: 47.50 },
+    { id: '10000_robux', name: '10000 Robux', price: 438800, bonus: 'No bonus', base_usd: 97.50 }
+  ],
+  roblox_id: [
+    { id: '50000_idr', name: '50000 IDR', price: 11500, bonus: 'No bonus', base_usd: 2.49 }, 
+    { id: '100000_idr', name: '100000 IDR', price: 23000, bonus: 'No bonus', base_usd: 5.07 },
+    { id: '300000_idr', name: '300000 IDR', price: 75000, bonus: 'No bonus', base_usd: 16.59 }, 
+    { id: '500000_idr', name: '500000 IDR', price: 124000, bonus: 'No bonus', base_usd: 27.49 }
+  ],
+  roblox_robux_us: [
+    { id: '50_robux', name: '50 Robux', price: 4000, bonus: 'No bonus', base_usd: 0.89 }, 
+    { id: '100_robux', name: '100 Robux', price: 7600, bonus: 'No bonus', base_usd: 1.68 },
+    { id: '555_robux', name: '555 Robux', price: 23000, bonus: 'No bonus', base_usd: 5.07 }, 
+    { id: '1000_robux', name: '1000 Robux', price: 40500, bonus: 'No bonus', base_usd: 9.00 },
+    { id: '2500_robux', name: '2500 Robux', price: 105500, bonus: 'No bonus', base_usd: 23.37 }, 
+    { id: '11000_robux', name: '11000 Robux', price: 420500, bonus: 'No bonus', base_usd: 93.42 }
+  ],
+  minecraft_minecoins: [
+    { id: '330_minecoins', name: '330 Minecoins', price: 18600, bonus: 'No bonus', base_usd: 4.12 }, 
+    { id: '1720_minecoins', name: '1720 Minecoins', price: 36500, bonus: 'No bonus', base_usd: 8.07 },
+    { id: '3500_minecoins', name: '3500 Minecoins', price: 50800, bonus: 'No bonus', base_usd: 11.27 }, 
+    { id: '8800_minecoins', name: '8800 Minecoins', price: 200800, bonus: 'No bonus', base_usd: 44.62 }
+  ],
+  discord_global: [
+    { id: 'discord_basic_1_month_subscription', name: 'Discord Basic: 1 Month', price: 20000, bonus: 'No bonus', base_usd: 4.38 },
+    { id: 'discord_nitro_1_month_subscription', name: 'Discord Nitro: 1 Month', price: 40000, bonus: 'No bonus', base_usd: 8.78 },
+    { id: 'discord_nitro_12_months_subscription', name: 'Discord Nitro: 12 Months', price: 400000, bonus: 'No bonus', base_usd: 87.87 }
+  ],
+  // API တွင် Base USD မပါဝင်သော အခြားဂိမ်းများအတွက် ခန့်မှန်းတွက်ချက်ထားသော USD များကို အသုံးပြုထားပါသည်
+  magic_chess_gogo_global: [
+    { id: '11_diamonds', name: '11 Diamonds', price: 900, bonus: 'No bonus', base_usd: 0.19 }, 
+    { id: '22_diamonds', name: '22 Diamonds', price: 1700, bonus: 'No bonus', base_usd: 0.36 },
+    { id: '56_diamonds', name: '56 Diamonds', price: 4200, bonus: 'No bonus', base_usd: 0.90 }, 
+    { id: 'first_recharge_100_50_50_bonus', name: 'First Recharge 100 (50+50)', price: 4400, bonus: 'No bonus', base_usd: 0.94 },
+    { id: '112_diamonds', name: '112 Diamonds', price: 8300, bonus: 'No bonus', base_usd: 1.78 }, 
+    { id: 'weekly_card', name: 'Weekly Card', price: 8800, bonus: 'No bonus', base_usd: 1.89 },
+    { id: 'first_recharge_300_150_150_bonus', name: 'First Recharge 300 (150+150)', price: 13000, bonus: 'No bonus', base_usd: 2.79 }, 
+    { id: '223_diamonds', name: '223 Diamonds', price: 16600, bonus: 'No bonus', base_usd: 3.56 },
+    { id: 'first_recharge_500_250_250_bonus', name: 'First Recharge 500 (250+250)', price: 21500, bonus: 'No bonus', base_usd: 4.62 }, 
+    { id: '336_diamonds', name: '336 Diamonds', price: 24900, bonus: 'No bonus', base_usd: 5.35 },
+    { id: '570_diamonds', name: '570 Diamonds', price: 41400, bonus: 'No bonus', base_usd: 8.90 }, 
+    { id: 'first_recharge_1000_500_500_bonus', name: 'First Recharge 1000 (500+500)', price: 43400, bonus: 'No bonus', base_usd: 9.33 },
+    { id: '1163_diamonds', name: '1163 Diamonds', price: 82900, bonus: 'No bonus', base_usd: 17.82 }, 
+    { id: '2398_diamonds', name: '2398 Diamonds', price: 165700, bonus: 'No bonus', base_usd: 35.63 },
+    { id: '6042_diamonds', name: '6042 Diamonds', price: 414100, bonus: 'No bonus', base_usd: 89.05 }
+  ],
+  heartopia: [
+    { id: '20_heart_diamond', name: '20 Heart Diamond', price: 2500, bonus: 'No bonus', base_usd: 0.53 }, 
+    { id: '60_heart_diamond', name: '60 Heart Diamond', price: 4800, bonus: 'No bonus', base_usd: 1.03 },
+    { id: 'gamg_formal_membership', name: 'GAMG Formal Membership', price: 15000, bonus: 'No bonus', base_usd: 3.22 }, 
+    { id: '320_heart_diamond', name: '320 Heart Diamond', price: 24500, bonus: 'No bonus', base_usd: 5.26 }, 
+    { id: 'festival_pack', name: 'Festival Pack', price: 24500, bonus: 'No bonus', base_usd: 5.26 }, 
+    { id: 'festival_pack_upgrade', name: 'Festival Pack Upgrade', price: 31000, bonus: 'No bonus', base_usd: 6.66 },
+    { id: '730_heart_diamond', name: '730 Heart Diamond', price: 55000, bonus: 'No bonus', base_usd: 11.82 }, 
+    { id: 'supreme_festival_pack', name: 'Supreme Festival Pack', price: 55000, bonus: 'No bonus', base_usd: 11.82 },
+    { id: '1370_heart_diamond', name: '1370 Heart Diamond', price: 100000, bonus: 'No bonus', base_usd: 21.50 }, 
+    { id: '2130_heart_diamond', name: '2130 Heart Diamond', price: 155000, bonus: 'No bonus', base_usd: 33.33 },
+    { id: '3550_heart_diamond', name: '3550 Heart Diamond', price: 250000, bonus: 'No bonus', base_usd: 53.76 }, 
+    { id: '7050_heart_diamond', name: '7050 Heart Diamond', price: 500000, bonus: 'No bonus', base_usd: 107.52 }
+  ],
+  eafc_mobile_id: [
+    { id: '40_fc_points', name: '40 FC Points', price: 1500, bonus: 'No bonus', base_usd: 0.32 }, 
+    { id: '100_fc_points', name: '100 FC Points', price: 3800, bonus: 'No bonus', base_usd: 0.81 },
+    { id: '520_fc_points', name: '520 FC Points', price: 18700, bonus: 'No bonus', base_usd: 4.02 }, 
+    { id: '1070_fc_points', name: '1070 FC Points', price: 37600, bonus: 'No bonus', base_usd: 8.08 },
+    { id: '2200_fc_points', name: '2200 FC Points', price: 77900, bonus: 'No bonus', base_usd: 16.75 }, 
+    { id: '5750_fc_points', name: '5750 FC Points', price: 189300, bonus: 'No bonus', base_usd: 40.70 },
+    { id: '12000_fc_points', name: '12000 FC Points', price: 378900, bonus: 'No bonus', base_usd: 81.48 }
+  ],
+  eafc_mobile_my: [
+    { id: '40_fc_points', name: '40 FC Points', price: 2100, bonus: 'No bonus', base_usd: 0.45 }, 
+    { id: '100_fc_points', name: '100 FC Points', price: 5200, bonus: 'No bonus', base_usd: 1.11 },
+    { id: '520_fc_points', name: '520 FC Points', price: 25400, bonus: 'No bonus', base_usd: 5.46 }, 
+    { id: '1070_fc_points', name: '1070 FC Points', price: 47800, bonus: 'No bonus', base_usd: 10.27 },
+    { id: '2200_fc_points', name: '2200 FC Points', price: 101100, bonus: 'No bonus', base_usd: 21.74 }, 
+    { id: '5750_fc_points', name: '5750 FC Points', price: 255700, bonus: 'No bonus', base_usd: 54.98 },
+    { id: '12000_fc_points', name: '12000 FC Points', price: 511600, bonus: 'No bonus', base_usd: 110.02 }
+  ],
+  genshin_impact_login: [
+    { id: '60', name: '60 Genesis Crystals', price: 3600, bonus: 'No bonus', base_usd: 0.77 }, 
+    { id: 'blessing_of_the_welkin_moon', name: 'Blessing of the Welkin Moon', price: 18400, bonus: 'No bonus', base_usd: 3.95 },
+    { id: '330', name: '300 + 30 Genesis Crystals', price: 18400, bonus: 'No bonus', base_usd: 3.95 }, 
+    { id: 'gnostic_hymn', name: 'Gnostic Hymn', price: 37000, bonus: 'No bonus', base_usd: 7.95 },
+    { id: '1090', name: '980 + 110 Genesis Crystals', price: 54800, bonus: 'No bonus', base_usd: 11.78 }, 
+    { id: 'gnostic_chorus', name: 'Gnostic Chorus', price: 73300, bonus: 'No bonus', base_usd: 15.76 },
+    { id: '2240', name: '1980 + 260 Genesis Crystals', price: 110400, bonus: 'No bonus', base_usd: 23.74 }, 
+    { id: '3880', name: '3280 + 600 Genesis Crystals', price: 185000, bonus: 'No bonus', base_usd: 39.78 },
+    { id: '8080', name: '6480 + 1600 Genesis Crystals', price: 363500, bonus: 'No bonus', base_usd: 78.17 }
+  ],
+  genshin_impact_global: [
+    { id: '60_genesis_crystals', name: '60 Genesis Crystals', price: 4500, bonus: 'No bonus', base_usd: 0.96 }, 
+    { id: 'blessing_of_the_welkin_moon', name: 'Blessing of the Welkin Moon', price: 22600, bonus: 'No bonus', base_usd: 4.86 },
+    { id: '300_30_genesis_crystals', name: '300 + 30 Genesis Crystals', price: 22600, bonus: 'No bonus', base_usd: 4.86 }, 
+    { id: '980_110_genesis_crystals', name: '980 + 110 Genesis Crystals', price: 67800, bonus: 'No bonus', base_usd: 14.58 },
+    { id: '1980_260_genesis_crystals', name: '1980 + 260 Genesis Crystals', price: 135600, bonus: 'No bonus', base_usd: 29.16 }, 
+    { id: '3280_600_genesis_crystals', name: '3280 + 600 Genesis Crystals', price: 226000, bonus: 'No bonus', base_usd: 48.60 },
+    { id: '6480_1600_genesis_crystals', name: '6480 + 1600 Genesis Crystals', price: 452000, bonus: 'No bonus', base_usd: 97.20 }
+  ],
+  capcut: [
+    { id: '1_month_eu_standard', name: '1 Month (EU) Standard', price: 38500, bonus: 'No bonus', base_usd: 8.27 }, 
+    { id: '1_month_uk_standard', name: '1 Month (UK) Standard', price: 27500, bonus: 'No bonus', base_usd: 5.91 },
+    { id: '1_month_us_standard', name: '1 Month (US) Standard', price: 74200, bonus: 'No bonus', base_usd: 15.95 }, 
+    { id: '1_month_eu_pro', name: '1 Month (EU) Pro', price: 79700, bonus: 'No bonus', base_usd: 17.13 },
+    { id: '1_month_uk_pro', name: '1 Month (UK) Pro', price: 79700, bonus: 'No bonus', base_usd: 17.13 }, 
+    { id: '1_month_us_pro', name: '1 Month (US) Pro', price: 55000, bonus: 'No bonus', base_usd: 11.82 }
+  ],
+  smileCoin: [
+    { id: 'smile_1', name: 'Brl 300', price: 25800, bonus: 'No bonus', base_usd: 5.54 }, 
+    { id: 'smile_2', name: 'Brl 1000', price: 83800, bonus: 'No bonus', base_usd: 18.02 },
+    { id: 'smile_3', name: 'Brl 5000', price: 419000, bonus: 'No bonus', base_usd: 90.10 }
+  ],
+  aniimo: [
+    { id: 'an1', name: '60 Stars', price: 3900, bonus: 'No bonus', base_usd: 0.83 }, 
+    { id: 'an2', name: '300 Stars', price: 23000, bonus: 'No bonus', base_usd: 4.94 },
+    { id: 'an3', name: '980 Stars', price: 67100, bonus: 'No bonus', base_usd: 14.43 }, 
+    { id: 'an4', name: '1980 Stars', price: 134100, bonus: 'No bonus', base_usd: 28.83 },
+    { id: 'an5', name: '3280 Stars', price: 227400, bonus: 'No bonus', base_usd: 48.90 }, 
+    { id: 'an6', name: '6480 Stars', price: 439000, bonus: 'No bonus', base_usd: 94.40 },
+  ],
+  spotify: [
+    { id: 'sp1', name: '1m - Individual', price: 8500, bonus: 'Individual Plan', base_usd: 1.82 }, 
+    { id: 'sp2', name: '3m - Individual', price: 33000, bonus: 'Individual Plan', base_usd: 7.09 },
+    { id: 'sp3', name: '6m - Individual', price: 52000, bonus: 'Individual Plan', base_usd: 11.18 }, 
+    { id: 'sp4', name: '12m - Individual', price: 78000, bonus: 'Individual Plan', base_usd: 16.77 },
+    { id: 'sp5', name: '2m - Family', price: 12000, bonus: 'Family plan', base_usd: 2.58 }, 
+    { id: 'sp6', name: '3m - Family', price: 16000, bonus: 'Family plan', base_usd: 3.44 },
+    { id: 'sp7', name: '6m - Family', price: 29000, bonus: 'Family plan', base_usd: 6.23 }, 
+    { id: 'sp8', name: '1yr - Family', price: 50000, bonus: 'Family plan', base_usd: 10.75 },
+  ],
+  jumpjump: [
+    { id: 'jv1', name: '1 Month - 1 Device (Share)', price: 10000, bonus: 'Share', base_usd: 2.15 }, 
+    { id: 'jv2', name: '1 Month - 1 Device (Own)', price: 14500, bonus: 'Own', base_usd: 3.11 },
+    { id: 'jv3', name: '1 Month - 2 Device (Own)', price: 19000, bonus: 'Own', base_usd: 4.08 }, 
+    { id: 'jv4', name: '6 Month - 2 Device (Own)', price: 95000, bonus: 'Own', base_usd: 20.43 },
+    { id: 'jv5', name: '12 Month - 2 Device (Own)', price: 123000, bonus: 'Own', base_usd: 26.45 },
+  ],
+  expressvpn: [
+    { id: 'ev1', name: '1 Month - 1 Device', price: 2000, bonus: '1 Device', base_usd: 0.43 }, 
+    { id: 'ev2', name: '1 Month - 12 Device', price: 12000, bonus: '12 Device', base_usd: 2.58 },
+  ]
 };
 
 const getGameLogo = (gameName: string) => {
@@ -267,7 +382,9 @@ export default function AdminPanel() {
             const index = updatedPrices[dbItem.category].findIndex((i: any) => i.id === dbItem.id);
             if (index !== -1) {
               updatedPrices[dbItem.category][index].price = dbItem.price;
-              updatedPrices[dbItem.category][index].base_usd = dbItem.base_usd || 0;
+              if (dbItem.base_usd && dbItem.base_usd > 0) {
+                updatedPrices[dbItem.category][index].base_usd = dbItem.base_usd;
+              }
             }
           }
         });
@@ -565,7 +682,7 @@ export default function AdminPanel() {
 
         <div className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
           <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all font-bold text-sm ${activeTab === 'dashboard' ? 'bg-white text-indigo-700 shadow-md' : 'text-indigo-100 hover:bg-indigo-600/50'}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2z"></path></svg>
             Dashboard
           </button>
           
@@ -638,7 +755,7 @@ export default function AdminPanel() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-[24px] shadow-lg text-white">
-                 <h3 className="text-indigo-100 text-sm font-bold mb-1">Today&apos;s Sales</h3>
+                 <h3 className="text-indigo-100 text-sm font-bold mb-1">Today's Sales</h3>
                   <p className="text-3xl font-black">{stats.todaySales.toLocaleString()} <span className="text-sm font-medium">Ks</span></p>
                 </div>
                 <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
