@@ -50,16 +50,16 @@ const initialGamePrices: Record<string, any[]> = {
     { id: 'mlbb_34', name: '2901 Diamonds', price: 171506, bonus: 'No bonus', base_usd: 101.90 },
     { id: 'mlbb_35', name: '3073 Diamonds', price: 182330, bonus: 'No bonus', base_usd: 111.28 },
     { id: 'mlbb_36', name: '3688 Diamonds', price: 215069, bonus: 'No bonus', base_usd: 117.90 },
-    { id: 'mlbb_37', name: '3945 Diamonds', price: 230747, bonus: 'No bonus', base_usd: 126.69 }, // Est
-    { id: 'mlbb_38', name: '4031 Diamonds', price: 236204, bonus: 'No bonus', base_usd: 129.68 }, // Est
-    { id: 'mlbb_39', name: '4566 Diamonds', price: 268482, bonus: 'No bonus', base_usd: 147.41 }, // Est
-    { id: 'mlbb_40', name: '5100 Diamonds', price: 300245, bonus: 'No bonus', base_usd: 164.84 }, // Est
-    { id: 'mlbb_41', name: '5532 Diamonds', price: 324734, bonus: 'No bonus', base_usd: 178.29 }, // Est
-    { id: 'mlbb_42', name: '6055 Diamonds', price: 354812, bonus: 'No bonus', base_usd: 194.81 }, // Est
-    { id: 'mlbb_43', name: '6752 Diamonds', price: 398677, bonus: 'No bonus', base_usd: 218.89 }, // Est
-    { id: 'mlbb_44', name: '7030 Diamonds', price: 415366, bonus: 'No bonus', base_usd: 228.05 }, // Est
-    { id: 'mlbb_45', name: '7727 Diamonds', price: 453651, bonus: 'No bonus', base_usd: 249.07 }, // Est
-    { id: 'mlbb_46', name: '9288 Diamonds', price: 539360, bonus: 'No bonus', base_usd: 296.13 }  // Est
+    { id: 'mlbb_37', name: '3945 Diamonds', price: 230747, bonus: 'No bonus', base_usd: 126.69 }, 
+    { id: 'mlbb_38', name: '4031 Diamonds', price: 236204, bonus: 'No bonus', base_usd: 129.68 }, 
+    { id: 'mlbb_39', name: '4566 Diamonds', price: 268482, bonus: 'No bonus', base_usd: 147.41 }, 
+    { id: 'mlbb_40', name: '5100 Diamonds', price: 300245, bonus: 'No bonus', base_usd: 164.84 }, 
+    { id: 'mlbb_41', name: '5532 Diamonds', price: 324734, bonus: 'No bonus', base_usd: 178.29 }, 
+    { id: 'mlbb_42', name: '6055 Diamonds', price: 354812, bonus: 'No bonus', base_usd: 194.81 }, 
+    { id: 'mlbb_43', name: '6752 Diamonds', price: 398677, bonus: 'No bonus', base_usd: 218.89 }, 
+    { id: 'mlbb_44', name: '7030 Diamonds', price: 415366, bonus: 'No bonus', base_usd: 228.05 }, 
+    { id: 'mlbb_45', name: '7727 Diamonds', price: 453651, bonus: 'No bonus', base_usd: 249.07 }, 
+    { id: 'mlbb_46', name: '9288 Diamonds', price: 539360, bonus: 'No bonus', base_usd: 296.13 } 
   ],
   mobile_legends_brazil: [
     { id: '50_5_diamonds_first_top_up_bonus', name: '55 Diamonds', price: 3500, bonus: 'No bonus', base_usd: 0.72 }, 
@@ -196,7 +196,6 @@ const initialGamePrices: Record<string, any[]> = {
     { id: 'discord_nitro_1_month_subscription', name: 'Discord Nitro: 1 Month', price: 40000, bonus: 'No bonus', base_usd: 8.78 },
     { id: 'discord_nitro_12_months_subscription', name: 'Discord Nitro: 12 Months', price: 400000, bonus: 'No bonus', base_usd: 87.87 }
   ],
-  // API တွင် Base USD မပါဝင်သော အခြားဂိမ်းများအတွက် ခန့်မှန်းတွက်ချက်ထားသော USD များကို အသုံးပြုထားပါသည်
   magic_chess_gogo_global: [
     { id: '11_diamonds', name: '11 Diamonds', price: 900, bonus: 'No bonus', base_usd: 0.19 }, 
     { id: '22_diamonds', name: '22 Diamonds', price: 1700, bonus: 'No bonus', base_usd: 0.36 },
@@ -618,8 +617,15 @@ export default function AdminPanel() {
     } finally { setIsSaving(false); }
   };
 
+  // 🌟 Error Fix: ဈေးနှုန်း ပြောင်းလဲသောအခါ '0' ရှေ့တွင် ခံမနေစေရန် ပြုပြင်ခြင်း 🌟
   const handlePriceChange = (category: keyof typeof gamePrices, id: string, newPrice: string, field: 'price' | 'base_usd') => {
     let sanitizedPrice = newPrice.replace(/[^0-9.]/g, ''); 
+    
+    // '0' အရှေ့မှာခံနေတာကို ဖျက်ပေးမယ် (ဥပမာ "03500" ကို "3500" အဖြစ်ပြောင်းမယ်)
+    if (sanitizedPrice.length > 1 && sanitizedPrice.startsWith('0') && !sanitizedPrice.startsWith('0.')) {
+      sanitizedPrice = sanitizedPrice.replace(/^0+/, '');
+    }
+
     setGamePrices(prev => ({ 
       ...prev, 
       [category]: prev[category].map(item => item.id === id ? { ...item, [field]: sanitizedPrice } : item) 
@@ -755,7 +761,8 @@ export default function AdminPanel() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-[24px] shadow-lg text-white">
-                 <h3 className="text-indigo-100 text-sm font-bold mb-1">Today's Sales</h3>
+                 {/* 🌟 Error Fix: 'Today's' မှ 'Today&apos;s' သို့ ပြောင်းထားပါသည် 🌟 */}
+                 <h3 className="text-indigo-100 text-sm font-bold mb-1">Today&apos;s Sales</h3>
                   <p className="text-3xl font-black">{stats.todaySales.toLocaleString()} <span className="text-sm font-medium">Ks</span></p>
                 </div>
                 <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
@@ -997,13 +1004,14 @@ export default function AdminPanel() {
                               <h3 className="text-gray-800 font-bold text-xs mb-1 uppercase truncate" title={item.name}>{item.name}</h3>
                               
                               <div className="flex gap-3 mt-3">
+                                {/* 🌟 0 ပိတ်နေသော Error ဖြေရှင်းထားသည် 🌟 */}
                                 {/* Base USD Input */}
                                 <div className="relative flex-1">
                                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">$</span>
                                   <input 
                                     type="text" 
                                     placeholder="Base USD"
-                                    value={item.base_usd === 0 ? '' : item.base_usd} 
+                                    value={item.base_usd || ''} 
                                     onChange={(e) => handlePriceChange(categoryKey as keyof typeof gamePrices, item.id, e.target.value, 'base_usd')} 
                                     className="w-full bg-white border border-gray-200 rounded-lg py-2 pl-7 pr-2 text-gray-800 text-sm font-bold focus:border-indigo-500 outline-none" 
                                   />
@@ -1013,7 +1021,7 @@ export default function AdminPanel() {
                                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">Ks</span>
                                   <input 
                                     type="text" 
-                                    value={item.price === 0 ? '' : item.price} 
+                                    value={item.price || ''} 
                                     onChange={(e) => handlePriceChange(categoryKey as keyof typeof gamePrices, item.id, e.target.value, 'price')} 
                                     className="w-full bg-white border border-gray-200 rounded-lg py-2 pl-3 pr-8 text-indigo-700 text-sm font-black focus:border-indigo-500 outline-none" 
                                   />
