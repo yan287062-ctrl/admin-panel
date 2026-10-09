@@ -469,13 +469,21 @@ export default function AdminPanel() {
       await supabase.from('orders').update({ status: 'approved' }).eq('id', order.id);
       fetchOrders();
       alert("⏳ Bot သို့ အော်ဒါပို့နေပါသည်... ကျေးဇူးပြု၍ ခေတ္တစောင့်ပါ။");
-      const response = await fetch('/api/bot', {
+      
+      // 🌟 API လမ်းကြောင်းကို '/api' ဟု ပြင်ထားပြီး price ကိုပါ ထည့်သွင်းထားပါသည် 🌟
+      const response = await fetch('/api', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          order_id: order.id, player_id: order.player_id, zone_id: order.zone_id, item_name: order.item_name, game_name: order.game_name
+          order_id: order.id, 
+          player_id: order.player_id, 
+          zone_id: order.zone_id, 
+          item_name: order.item_name, 
+          game_name: order.game_name,
+          price: order.price
         })
       });
+      
       const result = await response.json();
       if (result.success) {
         alert("✅ " + result.message);
@@ -617,11 +625,9 @@ export default function AdminPanel() {
     } finally { setIsSaving(false); }
   };
 
-  // 🌟 Error Fix: ဈေးနှုန်း ပြောင်းလဲသောအခါ '0' ရှေ့တွင် ခံမနေစေရန် ပြုပြင်ခြင်း 🌟
   const handlePriceChange = (category: keyof typeof gamePrices, id: string, newPrice: string, field: 'price' | 'base_usd') => {
     let sanitizedPrice = newPrice.replace(/[^0-9.]/g, ''); 
     
-    // '0' အရှေ့မှာခံနေတာကို ဖျက်ပေးမယ် (ဥပမာ "03500" ကို "3500" အဖြစ်ပြောင်းမယ်)
     if (sanitizedPrice.length > 1 && sanitizedPrice.startsWith('0') && !sanitizedPrice.startsWith('0.')) {
       sanitizedPrice = sanitizedPrice.replace(/^0+/, '');
     }
@@ -761,7 +767,6 @@ export default function AdminPanel() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-[24px] shadow-lg text-white">
-                 {/* 🌟 Error Fix: 'Today's' မှ 'Today&apos;s' သို့ ပြောင်းထားပါသည် 🌟 */}
                  <h3 className="text-indigo-100 text-sm font-bold mb-1">Today&apos;s Sales</h3>
                   <p className="text-3xl font-black">{stats.todaySales.toLocaleString()} <span className="text-sm font-medium">Ks</span></p>
                 </div>
@@ -1004,7 +1009,6 @@ export default function AdminPanel() {
                               <h3 className="text-gray-800 font-bold text-xs mb-1 uppercase truncate" title={item.name}>{item.name}</h3>
                               
                               <div className="flex gap-3 mt-3">
-                                {/* 🌟 0 ပိတ်နေသော Error ဖြေရှင်းထားသည် 🌟 */}
                                 {/* Base USD Input */}
                                 <div className="relative flex-1">
                                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">$</span>
