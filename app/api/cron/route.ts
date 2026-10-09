@@ -10,11 +10,9 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function GET(req: Request) {
   try {
-    // ယနေ့အတွက် အချိန်သတ်မှတ်ခြင်း (Start of Today)
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
 
-    // ယနေ့ရောင်းရသော အော်ဒါများကို ဆွဲထုတ်ခြင်း ('done' နှင့် 'success' သာ)
     const { data: orders } = await supabase
       .from('orders')
       .select('price, status, created_at')
@@ -39,8 +37,7 @@ export async function GET(req: Request) {
 <i>*This is an automated daily report.*</i>
     `;
 
-    const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    await fetch(telegramUrl, {
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'HTML' })
