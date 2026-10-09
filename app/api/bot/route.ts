@@ -1,48 +1,76 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-// 🌟 မင်းရဲ့ Telegram Bot Token နဲ့ Chat ID ကို ဒီမှာ အစားထိုးပါ 🌟
+// Telegram & FazerCards Keys
 const TELEGRAM_BOT_TOKEN = '8911924033:AAHoXq6poQPUBkOhT1nOLRr2ZmrCDbH_2lc'; 
 const TELEGRAM_CHAT_ID = '1934339791'; 
+const FAZER_API_KEY = 'fc_b3a25a567f875483c62dd761'; // 🌟 FazerCards API Key ထည့်ရန် 🌟
+
+const supabaseUrl = 'https://admin.painggyishop.cyou/api/supabase';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlamZoc3V3YWptemlrbXVkbWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NjA4NzUsImV4cCI6MjEwMzMzNjg3NX0.x3EVXbqCmrq0yiGlKI6GrWadKWU9TuXKs5F3w8uJNQA';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(req: Request) {
   try {
-    // Admin Panel က ပို့လိုက်တဲ့ အော်ဒါ Data တွေကို လက်ခံယူခြင်း
     const body = await req.json();
-    const { order_id, player_id, zone_id, item_name, game_name } = body;
+    const { order_id, player_id, zone_id, item_name, game_name, price } = body;
 
-    // Telegram သို့ ပို့မည့် စာသား Format အလှဆင်ခြင်း
-    const message = `
-🆕 <b>New Auto-Fill Request</b> 🤖
-━━━━━━━━━━━━━━━━━━
-🎮 Game: ${game_name || 'N/A'}
-💎 Item: ${item_name || 'N/A'}
-🆔 ID: <code>${player_id || 'N/A'}</code>
-🌐 Zone: ${zone_id ? `<code>${zone_id}</code>` : 'N/A'}
-🧾 Order ID: <code>${order_id}</code>
-━━━━━━━━━━━━━━━━━━
-    `;
-
-    // Telegram API သို့ လှမ်းပို့ခြင်း
-    const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    
-    const tgResponse = await fetch(telegramUrl, {
+    // 1️⃣ FazerCards ဆီသို့ Auto Topup လှမ်းလုပ်ခြင်း
+    // (မှတ်ချက်: FazerCards ၏ API Endpoint နှင့် Parameter အတိအကျကို မင်းရဲ့ API Docs အတိုင်း ပြင်ပေးနိုင်ပါသည်)
+    const fazerResponse = await fetch('https://reseller.fazercards.com/api/v1/order', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${FAZER_API_KEY}`
+      },
       body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'HTML'
+        game: game_name,
+        item: item_name,
+        player_id: player_id,
+        zone_id: zone_id || ''
       })
     });
 
-    if (!tgResponse.ok) {
-      const errorData = await tgResponse.json();
-      console.error("Telegram Error:", errorData);
-      throw new Error('Telegram သို့ ပို့ရာတွင် အခက်အခဲရှိနေပါသည်။');
+    const fazerData = await fazerResponse.json();
+    let statusMsg = '';
+    let isSuccess = false;
+
+    if (fazerData.ok || fazerData.success) {
+      isSuccess = true;
+      statusMsg = '✅ FazerCards တွင် အောင်မြင်စွာ ဝယ်ယူပြီးပါပြီ။ (Auto-Topup Success)';
+      // Supabase တွင် Order Status ကို 'success' သို့ ပြောင်းမည်
+      await supabase.from('orders').update({ status: 'success' }).eq('id', order_id);
+    } else {
+      statusMsg = `❌ ဝယ်ယူမှု ကျရှုံးပါသည်: ${fazerData.message || 'Unknown Error'}`;
+      // ကျရှုံးပါက 'pending' အတိုင်း ပြန်ထားမည်
+      await supabase.from('orders').update({ status: 'pending' }).eq('id', order_id);
     }
 
-    // အောင်မြင်ကြောင်း Admin Panel သို့ ပြန်အကြောင်းကြားခြင်း
-    return NextResponse.json({ success: true, message: "Telegram Bot ထံသို့ အော်ဒါ အောင်မြင်စွာ ပို့ပြီးပါပြီ! ✅" });
+    // 2️⃣ Telegram သို့ Report ပို့ခြင်း
+    const message = `
+🆕 <b>Auto-Fill System Report</b> 🤖
+━━━━━━━━━━━━━━━━━━
+🎮 Game: ${game_name}
+💎 Item: ${item_name}
+💰 Price: ${price} Ks
+🆔 ID: <code>${player_id}</code> ${zone_id ? `| Zone: <code>${zone_id}</code>` : ''}
+🧾 Order ID: <code>${order_id}</code>
+━━━━━━━━━━━━━━━━━━
+📊 <b>Status:</b> ${statusMsg}
+    `;
+
+    const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    await fetch(telegramUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'HTML' })
+    });
+
+    if (isSuccess) {
+      return NextResponse.json({ success: true, message: "FazerCards သို့ အော်ဒါဝင်ပြီး Telegram သို့ Report ပို့ပြီးပါပြီ ✅" });
+    } else {
+      return NextResponse.json({ success: false, message: statusMsg });
+    }
     
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
